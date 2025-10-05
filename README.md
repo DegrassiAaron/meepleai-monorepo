@@ -44,67 +44,25 @@ Ogni servizio espone un healthcheck nel `docker-compose.yml`, per cui `docker co
   Se stai aggiungendo una nuova migrazione, usa `dotnet ef migrations add <NomeMigrazione>` specificando `--project` e `--startup-project` se lavori da una directory diversa.
 - Le migrazioni generate sono versionate nella cartella `apps/api/src/Api/Migrations/`, così da avere commit tracciabili insieme al codice applicativo.
 
-### Modello ER (installazione singola)
+### Modello dati single-tenant
 
-```mermaid
-erDiagram
-    USERS {
-        string user_id PK
-        string email
-        string role
-    }
-    GAMES {
-        string game_id PK
-        string rule_spec_id FK
-        string status
-    }
-    RULE_SPECS {
-        string rule_spec_id PK
-        string version
-        timestamptz published_at
-    }
-    AGENTS {
-        string agent_id PK
-        string game_id FK
-        string kind
-        string display_name
-    }
-    CHATS {
-        string chat_id PK
-        string game_id FK
-        string rule_spec_id FK
-        string agent_id FK
-        timestamptz started_at
-    }
-    CHAT_LOGS {
-        string log_id PK
-        string chat_id FK
-        string speaker
-        text body
-    }
+MeepleAI ora opera in modalità **single-tenant**: l'applicazione conserva ancora le colonne `tenant_id` per retro-compatibilità, ma l'orchestrazione crea e utilizza automaticamente un unico tenant predefinito (`meepleai`).
 
-    RULE_SPECS ||--o{ GAMES : "FK rule_spec_id"
-    RULE_SPECS ||--o{ CHATS : "FK rule_spec_id"
-    GAMES ||--o{ AGENTS : "FK game_id"
-    GAMES ||--o{ CHATS : "FK game_id"
-    AGENTS ||--o{ CHATS : "FK agent_id"
-    CHATS ||--o{ CHAT_LOGS : "FK chat_id"
-```
+- Le entità principali (`users`, `games`, `rule_specs`, `agents`, `chats`, `chat_logs`, `audit_logs`) condividono lo stesso identificatore di tenant e vengono filtrate dal contesto applicativo attraverso un valore statico.
+- Le chiavi e gli indici rimangono invariati (incluso l'uso di `(tenant_id, ...)`) per consentire eventuali evoluzioni future verso scenari multi-tenant, ma non è più necessario creare o gestire tenant multipli durante lo sviluppo.
+- Migrazioni e validazioni schema continuano a garantire vincoli di `NOT NULL`/FK sulle colonne `tenant_id`, assicurando coerenza dei dati anche in modalità single-tenant.
 
-> Indicizzazione: oltre alle chiavi primarie, creare indici sulle colonne di filtraggio più usate (es. `game_id` per `chats` e `agents`, `published_at` per `rule_specs`) per supportare i requisiti di DB-01.
-
-### Seed demo e dati di default
+### Seed demo e dati iniziali
 
 - L'endpoint `POST /admin/seed` popola (o rigenera) una demo di regole di gioco tramite `RuleSpecService`, utile per validare rapidamente lo stack QA; lo script `scripts/seed-demo.ps1` lo invoca automaticamente contro le API locali.
-- Configura l'ID di gioco di default del front-end (vedi variabili `NEXT_PUBLIC_*` in `apps/web/.env.example`) a `demo-chess`, così i dati demo permettono alle chiamate `/agents/qa` di funzionare senza setup aggiuntivo.
-- Le chat devono referenziare sia il gioco (`game_id`) sia il modello di regole (`rule_spec_id`); la cancellazione di un gioco deve propagare tramite cascade verso agenti, chat e log per evitare orfani. Quando si applicano nuove migrazioni verificare che tutte le FK abbiano `ON DELETE CASCADE` o strategie equivalenti compatibili con RLS.
-- Per la verifica di DB-01 assicurarsi che gli indici a supporto delle query (es. `game_id`, `rule_spec_id`, `published_at`) siano presenti e che i dati seed rimangano coerenti con gli ID predefiniti usati nelle demo.
+- I dati demo vengono creati automaticamente per il tenant unico `meepleai`, con gioco di esempio `demo-chess`; non è più necessario impostare variabili d'ambiente lato web per forzare l'ID tenant.
+- Le chat continuano a referenziare `game_id` e `rule_spec_id`, ma non è previsto alcun cambio di tenant durante il normale utilizzo. Quando si applicano nuove migrazioni verificare che le FK mantengano `ON DELETE CASCADE` o strategie equivalenti.
 
 ## Autenticazione e ruoli
 
-- Le API espongono gli endpoint `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` e `GET /auth/me`. La registrazione assegna automaticamente un ruolo (`Admin`, `Editor`, `User`) e collega l'utente alla configurazione di default.
+- Le API espongono gli endpoint `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` e `GET /auth/me`. La registrazione utilizza sempre il tenant predefinito (`meepleai`) e assegna un ruolo (`Admin`, `Editor`, `User`).
 - Le sessioni sono persistite in tabella `user_sessions` con token casuali hashati; il token è inviato al client tramite cookie `HttpOnly`.
-- Gli endpoint protetti (`/agents/qa`, `/ingest/pdf`, `/admin/seed`) richiedono una sessione valida e rispettano i permessi: solo Admin può eseguire il seed, Admin/Editor possono accedere a ingest, tutti i ruoli autenticati possono usare il QA sul catalogo condiviso.
+- Gli endpoint protetti (`/agents/qa`, `/ingest/pdf`, `/admin/seed`) richiedono una sessione valida e rispettano i permessi: solo Admin può eseguire il seed, Admin/Editor possono accedere a ingest, tutti i ruoli autenticati possono usare il QA per i giochi disponibili nel tenant unico.
 
 ## Struttura
 
@@ -173,7 +131,7 @@ Accogliamo contributi dalla community! Prima di iniziare:
 
 #### Backend (.NET 8)
 - ✅ API REST con minimal APIs
-- ✅ Pipeline dati per installazione singola
+- ✅ Modalità single-tenant con contesto applicativo statico
 - ✅ Autenticazione basata su sessioni con cookie HttpOnly
 - ✅ Autorizzazione role-based (Admin, Editor, User)
 - ✅ Integrazione PostgreSQL con EF Core migrations

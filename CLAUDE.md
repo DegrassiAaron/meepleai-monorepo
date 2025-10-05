@@ -166,7 +166,6 @@ See [SECURITY.md](SECURITY.md) for complete security guidelines and secrets mana
 #### Frontend (`apps/web`)
 ```bash
 NEXT_PUBLIC_API_BASE=http://localhost:8080
-NEXT_PUBLIC_DEFAULT_GAME_ID=demo-chess
 ```
 
 #### Backend (`apps/api`)
