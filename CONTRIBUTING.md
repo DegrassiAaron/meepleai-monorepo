@@ -168,7 +168,7 @@ All contributions must include appropriate tests:
 - **Descriptive test names**: `Should_ReturnError_When_InvalidGameId`
 - **Mock external dependencies** (HTTP, database, file system)
 - **Use fixtures** for test data
-- **Test tenant isolation** for multi-tenant features
+- **Test access control paths** for authenticated features
 
 ## Pull Request Process
 
@@ -212,7 +212,7 @@ Include this checklist in your PR description:
 - [ ] Unit test coverage ≥80% on delta
 - [ ] E2E/integration tests pass
 - [ ] No secrets in diff; `.env` templates updated if needed
-- [ ] Multi-tenant: RLS/permissions tested
+- [ ] Autorizzazioni verificate (ACL/RBAC)
 - [ ] No performance regressions
 - [ ] Documentation updated (README, CHANGELOG)
 
@@ -251,7 +251,6 @@ Use issue templates when available. Include:
 - **Type**: `kind/bug`, `kind/feature`, `kind/docs`, `kind/chore`
 - **Area**: `area/web`, `area/api`, `area/infra`, `area/docs`
 - **Priority**: `priority/p0` (critical), `priority/p1` (high), `priority/p2` (medium), `priority/p3` (low)
-- **Tenant**: `tenant/sec` (security), `tenant/perf` (performance)
 
 ### Issue Workflow
 
