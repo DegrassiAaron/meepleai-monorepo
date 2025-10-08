@@ -90,7 +90,17 @@ export function createGameMock(options: GameMockOptions = {}) {
 /**
  * Creates a mock PDF document
  */
-export function createPdfMock(options: PdfMockOptions = {}) {
+export function createPdfMock(options: PdfMockOptions = {}): {
+  id: string;
+  fileName: string;
+  fileSizeBytes: number;
+  uploadedAt: string;
+  uploadedByUserId: string;
+  status?: string;
+  logUrl?: string | null;
+  processingStatus?: string;
+  processingError?: string | null;
+} {
   const baseResponse = {
     id: options.id ?? 'pdf-123',
     fileName: options.fileName ?? 'test.pdf',
