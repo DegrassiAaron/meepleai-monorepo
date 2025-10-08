@@ -57,7 +57,10 @@
       "Bash(git fetch:*)",
       "Bash(git rebase:*)",
       "Bash(git stash:*)",
-      "mcp__github-project-manager__github_review_pr"
+      "mcp__github-project-manager__github_review_pr",
+      "Bash(gh pr review:*)",
+      "Bash(gh run rerun:*)",
+      "mcp__github-project-manager__github_create_issue"
     ],
     "deny": [],
     "ask": []

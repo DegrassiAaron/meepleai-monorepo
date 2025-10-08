@@ -1,225 +1,147 @@
-# Prompt per Comando /find-issues
-
-Ecco un prompt per analizzare il progetto e identificare issue da creare:
-
+---
+description: Crea una nuova issue ben strutturata seguendo l'approccio BDD
 ---
 
-## Comando: `/find-issues [AREA/CONTESTO]`
+# Create Issue - Template BDD
 
-```
-Sei un esperto Software Architect e Technical Lead che analizza progetti per identificare miglioramenti, problemi e opportunità.
+Sei un esperto Product Owner / Business Analyst che crea issue ben strutturate seguendo l'approccio BDD (Behavior-Driven Development).
 
-AREA DI ANALISI: [AREA/CONTESTO o "intero progetto"]
+**TITOLO ISSUE:** $ARGUMENTS
 
-Il tuo compito è esaminare il codice, l'architettura e la documentazione per trovare issue concrete da creare, seguendo l'approccio BDD.
+Il tuo compito è creare una issue completa, chiara e pronta per essere implementata dal team di sviluppo.
 
-## Il tuo processo di analisi:
+## Struttura della Issue:
 
-### 1. Analisi del Codice
-Esamina il codice cercando:
-- **Code Smells**: duplicazione, complessità ciclomatica, metodi troppo lunghi
-- **Violazioni SOLID**: responsabilità multiple, accoppiamento stretto
-- **Anti-pattern**: God objects, hardcoding, mancanza di error handling
-- **Debito Tecnico**: TODO, FIXME, hack temporanei
-- **Mancanza di Test**: codice critico non coperto da test
-- **Performance**: query inefficienti, N+1 problems, memory leaks
+### 1. Titolo
+- Breve, descrittivo e orientato al comportamento
+- Formato: [TIPO] Breve descrizione del comportamento
+- Tipi disponibili: Feature, Bug, Refactor, Docs, Security, Performance, Chore
 
-### 2. Analisi dell'Architettura
-Identifica:
-- **Scalabilità**: bottleneck, single points of failure
-- **Manutenibilità**: moduli troppo accoppiati, mancanza di separazione
-- **Sicurezza**: vulnerabilità, credenziali hardcoded, mancanza validazione input
-- **Observability**: logging insufficiente, mancanza di metriche
-- **Resilienza**: mancanza di retry logic, timeout, circuit breakers
+**Genera un titolo ottimizzato basato su:** $ARGUMENTS
 
-### 3. Analisi della User Experience
-Cerca opportunità per:
-- **Miglioramenti UX**: flussi complicati, feedback mancanti
-- **Performance percepita**: loading states, ottimizzazioni frontend
-- **Accessibilità**: mancanza di ARIA labels, contrasto colori
-- **Edge Cases**: comportamenti non gestiti, messaggi di errore poco chiari
+### 2. Descrizione del Comportamento (User Story)
 
-### 4. Analisi della Documentazione
-Verifica:
-- **README**: setup incompleto, dipendenze non documentate
-- **API Documentation**: endpoint non documentati, esempi mancanti
-- **Comments**: codice complesso senza spiegazioni
-- **Architecture Docs**: diagrammi obsoleti, decisioni non documentate
+**Come** [ruolo utente]
+**Voglio** [obiettivo/funzionalità]
+**Così che** [beneficio/valore di business]
 
-## Output: Lista di Issue Prioritizzate
+### 3. Contesto
 
-Per ogni issue identificata, fornisci:
+**Perché questa issue è necessaria?**
+- Problema da risolvere o valore da aggiungere
+- Background e motivazione
+- Link a discussioni, documenti o issue correlate (se esistenti)
 
-### Issue #N: [TITOLO-BREVE]
-**Tipo**: [Bug/Feature/Refactor/Docs/Security/Performance]  
-**Priorità**: [Critical/High/Medium/Low]  
-**Effort**: [S/M/L/XL]
+### 4. Scenari BDD (Acceptance Criteria)
 
-**Problema/Opportunità**:
-[Descrizione chiara di cosa hai trovato e perché è un problema]
+Scrivi scenari concreti e verificabili in formato Given-When-Then:
 
-**Impatto**:
-- **Utenti**: [Come impatta gli utenti]
-- **Sviluppatori**: [Come impatta il team]
-- **Business**: [Valore di business]
+Feature: [Nome della feature]
 
-**Scenario BDD di esempio**:
-```gherkin
-Scenario: [Nome scenario]
+Scenario: [Happy path - comportamento principale]
+  Given [contesto iniziale]
+  And [altro contesto se necessario]
+  When [azione/evento dell'utente]
+  Then [risultato atteso]
+  And [altro risultato se necessario]
+
+Scenario: [Edge case 1]
+  Given [contesto specifico]
+  When [azione in condizione limite]
+  Then [comportamento atteso in edge case]
+
+Scenario: [Edge case 2]
+  Given [altro contesto specifico]
+  When [altra azione limite]
+  Then [comportamento atteso]
+
+Scenario: [Gestione errori]
   Given [contesto]
-  When [azione]
-  Then [risultato atteso che ora non accade]
-```
+  When [azione non valida o input errato]
+  Then [errore chiaro e user-friendly]
+  And [sistema rimane in stato consistente]
 
-**Suggerimento di soluzione**:
-[Breve idea su come affrontare il problema]
+**Importante:** Usa dati ed esempi concreti, non placeholder generici!
 
-**Dipendenze**:
-[Issue correlate o prerequisiti]
+### 5. Considerazioni Tecniche
 
----
+**Componenti/Moduli coinvolti:**
+- [Lista dei file o componenti da modificare/creare]
 
-## Criteri di Prioritizzazione:
+**Possibili approcci di implementazione:**
+- [Approccio 1 con pro/contro]
+- [Approccio 2 con pro/contro]
+- [Raccomandazione con motivazione]
 
-### Critical (P0)
-- Security vulnerabilities
-- Data loss risks
-- Production bugs che bloccano utenti
-- Performance critiche che impattano SLA
+**Dipendenze:**
+- [Issue prerequisite o correlate]
+- [Librerie o tool necessari]
 
-### High (P1)
-- Bug che impattano funzionalità chiave
-- Technical debt che blocca nuove feature
-- Performance issues visibili agli utenti
-- Mancanze di sicurezza non critiche
+**Impatti sul sistema esistente:**
+- [Funzionalità che potrebbero essere influenzate]
+- [Necessità di migration o backward compatibility]
 
-### Medium (P2)
-- Miglioramenti UX significativi
-- Refactoring per migliorare manutenibilità
-- Test coverage per codice critico
-- Documentazione importante mancante
+**Performance e Scalabilità:**
+- [Considerazioni su carico, latenza, memoria se rilevanti]
 
-### Low (P3)
-- Nice-to-have features
-- Ottimizzazioni minori
-- Miglioramenti estetici
-- Documentazione di dettaglio
+### 6. Definition of Done
 
-## Guidelines:
+- [ ] Tutti gli scenari BDD sono implementati e i test passano
+- [ ] Test unitari scritti e passano (coverage >= 80% per nuovo codice)
+- [ ] Test di integrazione (se necessari) passano
+- [ ] Codice reviewato e approvato
+- [ ] Documentazione aggiornata (README, API docs, commenti)
+- [ ] Nessuna regressione su funzionalità esistenti verificata
+- [ ] Performance verificate (se rilevanti per questa issue)
+- [ ] Accessibilità verificata (se impatta UI)
 
-1. **Sii Specifico**: Non dire "il codice è disordinato", ma identifica problemi concreti
-2. **Sii Pragmatico**: Bilancia ideale vs pratico, considera ROI
-3. **Fornisci Contesto**: Spiega PERCHÉ è un problema, non solo COSA
-4. **Pensa agli Utenti**: Prioritizza ciò che impatta l'esperienza utente
-5. **Considera il Team**: Issue troppo grandi vanno divise in sotto-task
-6. **Evidenzia Quick Wins**: Issue ad alto impatto e basso sforzo
+### 7. Stima e Priorità
 
-## Formato del Report:
+**Complessità:** [S / M / L / XL]
+- **S (Small):** < 4 ore, chiaro e semplice
+- **M (Medium):** 1-2 giorni, complessità moderata
+- **L (Large):** 3-5 giorni, richiede design o refactoring
+- **XL (Extra Large):** > 5 giorni, considerare di dividere la issue
 
-```
-# 📋 Issue Report: [AREA]
+**Motivazione della stima:** [Perché questa complessità]
 
-## 🔥 Critical (Immediate Action)
-[Lista issue P0]
+**Priorità:** [Critical / High / Medium / Low]
+- **Critical (P0):** Blocca utenti o sistema, security issue grave
+- **High (P1):** Impatta funzionalità chiave o blocca altre issue
+- **Medium (P2):** Miglioramento importante ma non urgente
+- **Low (P3):** Nice-to-have, può aspettare
 
-## ⚠️ High Priority
-[Lista issue P1]
+**Motivazione della priorità:** [Perché questa priorità]
 
-## 📊 Medium Priority  
-[Lista issue P2]
+**Valore di Business:** [Alto / Medio / Basso]
+- [Spiegazione del valore per utenti/business]
 
-## 💡 Low Priority / Future Improvements
-[Lista issue P3]
+### 8. Out of Scope
 
-## 📈 Metriche di Analisi
-- Totale issue identificate: X
-- Code coverage attuale: Y%
-- Complessità ciclomatica media: Z
-- File con >500 linee: N
+**Cosa NON è incluso in questa issue:**
+- [Elemento 1 esplicitamente escluso]
+- [Elemento 2 esplicitamente escluso]
+- [Possibili estensioni future da fare in issue separate]
 
-## 🎯 Raccomandazioni per i prossimi Sprint
-[Top 3-5 issue da affrontare subito con motivazione]
-```
+**Scopo:** Prevenire scope creep e mantenere la issue focalizzata
 
-Inizia l'analisi e genera il report con le issue identificate.
-```
+### 9. Domande Aperte
 
----
+**Decisioni da prendere prima dell'implementazione:**
+- [ ] [Domanda 1 che richiede chiarimento]
+- [ ] [Domanda 2 che richiede decisione tecnica/business]
 
-## Esempi d'uso:
+**Assumzioni correnti:**
+- [Assunzione 1 da validare]
+- [Assunzione 2 da validare]
 
-### Analisi Completa
-```
-/find-issues intero progetto
+## Principi per una Buona Issue:
 
-[Allega o descrivi il progetto]
-```
+✅ **Chiarezza:** Chiunque nel team deve capirla senza ambiguità
+✅ **Testabilità:** Criteri di accettazione verificabili oggettivamente
+✅ **Indipendenza:** Può essere implementata autonomamente (quando possibile)
+✅ **Valore:** Chiaro beneficio per utenti o sistema
+✅ **Small:** Completabile in uno sprint (altrimenti dividere)
+✅ **Esempi Concreti:** Usa dati reali, non "user123" o "example.com"
 
-### Analisi Mirata
-```
-/find-issues sistema di autenticazione
-
-[Allega file o descrivi l'area]
-```
-
-### Analisi Specifica
-```
-/find-issues performance del checkout
-
-Sto notando che il checkout è lento, trova problemi specifici.
-```
-
----
-
-## Workflow Completo:
-
-```
-1. /find-issues [area] 
-   → Analizza e identifica problemi
-
-2. Rivedi il report e seleziona issue prioritarie
-
-3. /create-issue [titolo]
-   → Crea issue dettagliata per ogni problema identificato
-
-4. /issue [ISSUE-ID]
-   → Implementa la soluzione con approccio BDD
-```
-
----
-
-## Output Esempio:
-
-Quando lanci `/find-issues sistema-login`, Claude potrebbe rispondere:
-
-```
-# 📋 Issue Report: Sistema Login
-
-## 🔥 Critical (Immediate Action)
-
-### Issue #1: Password memorizzate in plain text nei log
-**Tipo**: Security | **Priorità**: Critical | **Effort**: M
-
-**Problema**: Nel file AuthService.ts, le password vengono loggate 
-in chiaro durante il debug, esponendo credenziali sensibili.
-
-**Impatto**:
-- Utenti: Rischio furto credenziali
-- Business: Violazione GDPR, rischio reputazionale
-
-**Scenario BDD**:
-Given un utente effettua login
-When il sistema logga l'operazione
-Then le credenziali NON devono apparire nei log
-
-**Soluzione suggerita**: Sanitizzare tutti i log, usare masked fields
-
----
-
-## ⚠️ High Priority
-
-### Issue #2: Manca rate limiting sul login
-[...]
-```
-
-Vuoi che aggiunga specifiche categorie di analisi (Security audit, Performance audit, Code quality audit, etc.)?
+Ora genera la issue completa e strutturata basata su: **$ARGUMENTS**
