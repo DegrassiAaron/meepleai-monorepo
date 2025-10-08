@@ -68,13 +68,13 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
 
                 // Remove AI request logs
                 var logs = await db.AiRequestLogs
-                    .Where(l => _testUserIds.Contains(l.UserId))
+                    .Where(l => l.UserId != null && _testUserIds.Contains(l.UserId))
                     .ToListAsync();
                 db.AiRequestLogs.RemoveRange(logs);
 
                 // Remove agent feedback
                 var feedback = await db.AgentFeedbacks
-                    .Where(f => _testUserIds.Contains(f.UserId))
+                    .Where(f => f.UserId != null && _testUserIds.Contains(f.UserId))
                     .ToListAsync();
                 db.AgentFeedbacks.RemoveRange(feedback);
 
