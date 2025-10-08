@@ -20,6 +20,7 @@ namespace Api.Tests;
 /// Note: This consolidates authorization tests to eliminate duplication.
 /// Individual endpoint test files focus on happy-path behaviors.
 /// </summary>
+[Collection("Admin Endpoints")]
 public class AdminAuthorizationTests : AdminTestFixture
 {
     public AdminAuthorizationTests(WebApplicationFactoryFixture factory) : base(factory)

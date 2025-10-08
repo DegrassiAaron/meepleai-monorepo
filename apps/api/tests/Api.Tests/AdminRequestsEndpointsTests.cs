@@ -16,6 +16,7 @@ namespace Api.Tests;
 /// I want to view filtered AI request logs with metadata
 /// So that I can audit system usage and troubleshoot issues
 /// </summary>
+[Collection("Admin Endpoints")]
 public class AdminRequestsEndpointsTests : AdminTestFixture
 {
     public AdminRequestsEndpointsTests(WebApplicationFactoryFixture factory) : base(factory)

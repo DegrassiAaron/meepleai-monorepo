@@ -20,6 +20,7 @@ namespace Api.Tests;
 /// I want to create, read, update, and delete n8n configurations
 /// So that I can manage workflow integrations and API credentials
 /// </summary>
+[Collection("Admin Endpoints")]
 public class N8nConfigEndpointsTests : AdminTestFixture
 {
     public N8nConfigEndpointsTests(WebApplicationFactoryFixture factory) : base(factory)

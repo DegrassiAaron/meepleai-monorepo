@@ -15,6 +15,7 @@ namespace Api.Tests;
 /// I want to view aggregated statistics about AI requests and feedback
 /// So that I can monitor system usage and quality metrics
 /// </summary>
+[Collection("Admin Endpoints")]
 public class AdminStatsEndpointsTests : AdminTestFixture
 {
     public AdminStatsEndpointsTests(WebApplicationFactoryFixture factory) : base(factory)

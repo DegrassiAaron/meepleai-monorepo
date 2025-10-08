@@ -19,8 +19,9 @@ namespace Api.Tests;
 /// <summary>
 /// Base class for admin endpoint integration tests providing shared helpers and utilities.
 /// Implements common authentication, seeding, and HTTP client management functionality.
+/// Uses IAsyncLifetime for proper test isolation and resource cleanup.
 /// </summary>
-public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixture>
+public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixture>, IAsyncLifetime
 {
     protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -28,10 +29,78 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
     };
 
     protected readonly WebApplicationFactoryFixture Factory;
+    private readonly List<string> _testUserIds = new();
+    private readonly List<string> _testConfigIds = new();
 
     protected AdminTestFixture(WebApplicationFactoryFixture factory)
     {
         Factory = factory;
+    }
+
+    /// <summary>
+    /// Initialize test resources before each test.
+    /// Override in derived classes for custom setup.
+    /// </summary>
+    public virtual Task InitializeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Cleanup test resources after each test.
+    /// Automatically cleans up test users, configs, logs, and feedback.
+    /// </summary>
+    public virtual async Task DisposeAsync()
+    {
+        try
+        {
+            using var scope = Factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<MeepleAiDbContext>();
+
+            // Cleanup test data in reverse dependency order
+            if (_testUserIds.Count > 0)
+            {
+                // Remove user sessions
+                var sessions = await db.UserSessions
+                    .Where(s => s.UserId != null && _testUserIds.Contains(s.UserId))
+                    .ToListAsync();
+                db.UserSessions.RemoveRange(sessions);
+
+                // Remove AI request logs
+                var logs = await db.AiRequestLogs
+                    .Where(l => _testUserIds.Contains(l.UserId))
+                    .ToListAsync();
+                db.AiRequestLogs.RemoveRange(logs);
+
+                // Remove agent feedback
+                var feedback = await db.AgentFeedbacks
+                    .Where(f => _testUserIds.Contains(f.UserId))
+                    .ToListAsync();
+                db.AgentFeedbacks.RemoveRange(feedback);
+
+                // Remove users
+                var users = await db.Users
+                    .Where(u => _testUserIds.Contains(u.Id))
+                    .ToListAsync();
+                db.Users.RemoveRange(users);
+            }
+
+            // Cleanup N8n configs
+            if (_testConfigIds.Count > 0)
+            {
+                var configs = await db.N8nConfigs
+                    .Where(c => _testConfigIds.Contains(c.Id))
+                    .ToListAsync();
+                db.N8nConfigs.RemoveRange(configs);
+            }
+
+            await db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log cleanup failure but don't fail the test
+            Console.WriteLine($"Test cleanup warning: {ex.Message}");
+        }
     }
 
     // ===== HTTP Client Helpers =====
@@ -84,6 +153,10 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
             var parsedRole = Enum.Parse<UserRole>(role, true);
             await PromoteUserAsync(email, parsedRole);
         }
+
+        // Track user ID for cleanup
+        var userId = await GetUserIdByEmailAsync(email);
+        _testUserIds.Add(userId);
 
         return ExtractCookies(response);
     }
@@ -239,7 +312,7 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
     {
         using var scope = Factory.Services.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<N8nConfigService>();
-        return await service.CreateConfigAsync(
+        var config = await service.CreateConfigAsync(
             userId,
             new CreateN8nConfigRequest(
                 name,
@@ -247,5 +320,10 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
                 "seed-api-key",
                 "https://n8n.seed/webhook"),
             default);
+
+        // Track config ID for cleanup
+        _testConfigIds.Add(config.Id);
+
+        return config;
     }
 }
