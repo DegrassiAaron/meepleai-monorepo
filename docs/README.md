@@ -12,6 +12,12 @@ This directory contains technical documentation for the MeepleAI monorepo.
   - CI/CD integration options
   - Best practices and troubleshooting
 
+- **[Coverage Baseline Estimate](./coverage-baseline-estimate.md)** - Current test suite analysis and coverage baseline
+  - 313 tests across 39 test files
+  - Estimated 75-85% line coverage
+  - Measurement plan and recommendations
+  - Next steps for actual baseline
+
 ### Architecture & Design
 
 - **[AI-01: Embeddings & Qdrant](./AI-01-embeddings-qdrant.md)** - Vector search and embeddings implementation
