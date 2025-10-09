@@ -162,15 +162,8 @@ public class PdfStorageServiceIntegrationTests : PostgresIntegrationTestBase
     private sealed class TestPdfTableExtractionService : PdfTableExtractionService
     {
         public TestPdfTableExtractionService()
-            : base(NullLogger<PdfTableExtractionService>.Instance, CreateMockPdfParserClient())
+            : base(NullLogger<PdfTableExtractionService>.Instance)
         {
-        }
-
-        private static IPdfParserClient CreateMockPdfParserClient()
-        {
-            var mock = new Mock<IPdfParserClient>();
-            mock.Setup(c => c.IsAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
-            return mock.Object;
         }
 
         public override Task<PdfStructuredExtractionResult> ExtractStructuredContentAsync(string filePath, CancellationToken ct = default)
