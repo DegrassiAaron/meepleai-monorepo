@@ -110,9 +110,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 // Configure HttpClient for EmbeddingService
 builder.Services.AddHttpClient();
 
-// Configure HttpClient for PdfParserClient
-builder.Services.AddHttpClient<IPdfParserClient, PdfParserClient>();
-
 // Background task execution
 builder.Services.AddSingleton<IBackgroundTaskService, BackgroundTaskService>();
 
