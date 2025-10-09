@@ -24,6 +24,12 @@ This directory contains technical documentation for the MeepleAI monorepo.
   - Coverage badge and monitoring
   - Troubleshooting common issues
 
+- **[Setup Checklist](./SETUP-CHECKLIST.md)** - Quick checklist to activate Codecov (5-10 minutes)
+  - Completed steps overview
+  - Remaining steps with time estimates
+  - Expected results and success criteria
+  - Troubleshooting quick reference
+
 ### Architecture & Design
 
 - **[AI-01: Embeddings & Qdrant](./AI-01-embeddings-qdrant.md)** - Vector search and embeddings implementation
