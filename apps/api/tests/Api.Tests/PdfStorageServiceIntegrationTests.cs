@@ -162,8 +162,15 @@ public class PdfStorageServiceIntegrationTests : PostgresIntegrationTestBase
     private sealed class TestPdfTableExtractionService : PdfTableExtractionService
     {
         public TestPdfTableExtractionService()
-            : base(NullLogger<PdfTableExtractionService>.Instance)
+            : base(NullLogger<PdfTableExtractionService>.Instance, CreateMockPdfParserClient())
         {
+        }
+
+        private static IPdfParserClient CreateMockPdfParserClient()
+        {
+            var mock = new Mock<IPdfParserClient>();
+            mock.Setup(c => c.IsAvailableAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+            return mock.Object;
         }
 
         public override Task<PdfStructuredExtractionResult> ExtractStructuredContentAsync(string filePath, CancellationToken ct = default)
@@ -257,12 +264,27 @@ public class PdfStorageServiceIntegrationTests : PostgresIntegrationTestBase
             return Task.FromResult(IndexResult.CreateSuccess(chunks.Count));
         }
 
+        public Task<IndexResult> IndexChunksWithMetadataAsync(Dictionary<string, string> metadata, List<DocumentChunk> chunks, CancellationToken ct = default)
+        {
+            return Task.FromResult(IndexResult.CreateSuccess(chunks.Count));
+        }
+
         public Task<SearchResult> SearchAsync(string gameId, float[] queryEmbedding, int limit = 5, CancellationToken ct = default)
         {
             throw new NotSupportedException();
         }
 
+        public Task<SearchResult> SearchByCategoryAsync(string category, float[] queryEmbedding, int limit = 5, CancellationToken ct = default)
+        {
+            throw new NotSupportedException();
+        }
+
         public Task<bool> DeleteDocumentAsync(string pdfId, CancellationToken ct = default)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> DeleteByCategoryAsync(string category, CancellationToken ct = default)
         {
             return Task.FromResult(true);
         }
