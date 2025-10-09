@@ -18,6 +18,12 @@ This directory contains technical documentation for the MeepleAI monorepo.
   - Measurement plan and recommendations
   - Next steps for actual baseline
 
+- **[Codecov Setup Guide](./codecov-setup.md)** - Step-by-step instructions for Codecov integration
+  - Account creation and repository setup
+  - GitHub secrets configuration
+  - Coverage badge and monitoring
+  - Troubleshooting common issues
+
 ### Architecture & Design
 
 - **[AI-01: Embeddings & Qdrant](./AI-01-embeddings-qdrant.md)** - Vector search and embeddings implementation
