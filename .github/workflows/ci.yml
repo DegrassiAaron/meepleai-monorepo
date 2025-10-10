@@ -92,7 +92,7 @@ jobs:
         run: CI=true pnpm test:coverage
 
       - name: Upload Web Coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: apps/web/coverage/lcov.info
           flags: web
@@ -169,7 +169,7 @@ jobs:
             -p:CoverletOutput=./tests/Api.Tests/coverage/
 
       - name: Upload API Coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: apps/api/tests/Api.Tests/coverage/coverage.info
           flags: api
