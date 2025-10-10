@@ -133,6 +133,10 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
 
+      - name: Install frontend dependencies
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+
       - name: Scan Frontend Dependencies
         id: pnpm-scan
         working-directory: apps/web
