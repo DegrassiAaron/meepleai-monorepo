@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Api.Infrastructure;
 using Api.Infrastructure.Entities;
+using Api.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
