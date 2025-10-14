@@ -105,7 +105,10 @@
       "Bash(Where-Object { $_itle -match \"CHESS-03|PDF-02|AI-01\" })",
       "Bash(Format-Table -AutoSize)",
       "Bash(Select-String -Pattern \"error|warning|successo|Build succeeded\" -Context 0,1)",
-      "Bash(Select-String -Pattern \"FAIL|PASS|Error|Total tests|Test Run\" -Context 0,1)"
+      "Bash(Select-String -Pattern \"FAIL|PASS|Error|Total tests|Test Run\" -Context 0,1)",
+      "Bash(dotnet add package:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat(ops): implement observability foundation layer (OPS-01)\n\nImplement production-ready observability infrastructure for MeepleAI:\n\nHealth Checks:\n- Add ASP.NET Core health checks for all critical dependencies\n- Create custom QdrantHealthCheck for vector DB collection verification  \n- Implement 3 endpoints: /health (detailed), /health/ready (K8s), /health/live\n- Monitor: Postgres, Redis, Qdrant HTTP, Qdrant collection\n\nSeq Log Aggregation:\n- Add Seq service to Docker Compose (port 8081)\n- Configure Serilog.Sinks.Seq for centralized log shipping\n- Enable searchable, filterable log viewing with correlation ID tracking\n\nEnhanced Structured Logging:\n- Dual sinks: Console + Seq\n- Comprehensive request enrichment: RequestId, RequestPath, RequestMethod,\n  UserAgent, RemoteIp, UserId, UserEmail (when authenticated)\n- X-Correlation-ID response header on every request\n\nDocumentation:\n- Create docs/observability.md (265 lines) - comprehensive observability guide\n- Update CLAUDE.md with observability patterns and configuration\n\nCloses #292\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(Format-List)"
     ],
     "deny": [],
     "ask": []
