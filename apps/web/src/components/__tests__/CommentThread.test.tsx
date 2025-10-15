@@ -14,7 +14,12 @@ jest.mock('../../lib/api', () => ({
   }
 }));
 
-const mockedApi = api as jest.Mocked<typeof api>;
+const mockedApi = api.ruleSpecComments as {
+  getComments: jest.MockedFunction<typeof api.ruleSpecComments.getComments>;
+  createComment: jest.MockedFunction<typeof api.ruleSpecComments.createComment>;
+  updateComment: jest.MockedFunction<typeof api.ruleSpecComments.updateComment>;
+  deleteComment: jest.MockedFunction<typeof api.ruleSpecComments.deleteComment>;
+};
 
 describe('CommentThread', () => {
   const mockComments = [
@@ -43,14 +48,14 @@ describe('CommentThread', () => {
   ];
 
   beforeEach(() => {
-    mockedApi.ruleSpecComments.getComments.mockReset();
-    mockedApi.ruleSpecComments.createComment.mockReset();
-    mockedApi.ruleSpecComments.updateComment.mockReset();
-    mockedApi.ruleSpecComments.deleteComment.mockReset();
+    mockedApi.getComments.mockReset();
+    mockedApi.createComment.mockReset();
+    mockedApi.updateComment.mockReset();
+    mockedApi.deleteComment.mockReset();
   });
 
   it('loads and displays comments', async () => {
-    mockedApi.ruleSpecComments.getComments.mockResolvedValue({
+    mockedApi.getComments.mockResolvedValue({
       gameId: 'chess',
       version: 'v1',
       comments: mockComments,
@@ -75,7 +80,7 @@ describe('CommentThread', () => {
   });
 
   it('displays message when no comments exist', async () => {
-    mockedApi.ruleSpecComments.getComments.mockResolvedValue({
+    mockedApi.getComments.mockResolvedValue({
       gameId: 'chess',
       version: 'v1',
       comments: [],
@@ -99,14 +104,14 @@ describe('CommentThread', () => {
   it('allows Editor to create comment', async () => {
     const user = userEvent.setup();
 
-    mockedApi.ruleSpecComments.getComments.mockResolvedValue({
+    mockedApi.getComments.mockResolvedValue({
       gameId: 'chess',
       version: 'v1',
       comments: [],
       totalComments: 0
     });
 
-    mockedApi.ruleSpecComments.createComment.mockResolvedValue({
+    mockedApi.createComment.mockResolvedValue({
       id: 'comment-new',
       gameId: 'chess',
       version: 'v1',
@@ -138,7 +143,7 @@ describe('CommentThread', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockedApi.ruleSpecComments.createComment).toHaveBeenCalledWith(
+      expect(mockedApi.createComment).toHaveBeenCalledWith(
         'chess',
         'v1',
         {
@@ -150,7 +155,7 @@ describe('CommentThread', () => {
   });
 
   it('does not show comment form for regular User', async () => {
-    mockedApi.ruleSpecComments.getComments.mockResolvedValue({
+    mockedApi.getComments.mockResolvedValue({
       gameId: 'chess',
       version: 'v1',
       comments: [],
@@ -174,7 +179,7 @@ describe('CommentThread', () => {
   });
 
   it('allows Admin to create comment', async () => {
-    mockedApi.ruleSpecComments.getComments.mockResolvedValue({
+    mockedApi.getComments.mockResolvedValue({
       gameId: 'chess',
       version: 'v1',
       comments: [],
@@ -198,7 +203,7 @@ describe('CommentThread', () => {
   it('displays error message when loading comments fails', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    mockedApi.ruleSpecComments.getComments.mockRejectedValue(
+    mockedApi.getComments.mockRejectedValue(
       new Error()
     );
 

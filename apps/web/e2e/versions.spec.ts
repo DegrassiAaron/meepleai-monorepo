@@ -286,7 +286,22 @@ test.describe('RuleSpec versions history', () => {
       changes: []
     };
 
-    const commentsData = {
+    const commentsData: {
+      gameId: string;
+      version: string;
+      comments: Array<{
+        id: string;
+        gameId: string;
+        version: string;
+        atomId: string | null;
+        userId: string;
+        userDisplayName: string;
+        commentText: string;
+        createdAt: string;
+        updatedAt: string | null;
+      }>;
+      totalComments: number;
+    } = {
       gameId: 'demo-chess',
       version: 'v2',
       comments: [
