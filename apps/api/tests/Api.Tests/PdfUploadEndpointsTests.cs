@@ -419,7 +419,7 @@ public class PdfUploadEndpointsTests : IntegrationTestBase
         }
 
         // When: User requests PDF details
-        var request = new HttpRequestMessage(HttpMethod.Get, $"/pdfs/{pdfId}/text");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/pdfs/{pdfId}/text");
         AddCookies(request, cookies);
 
         var response = await client.SendAsync(request);
@@ -478,7 +478,7 @@ public class PdfUploadEndpointsTests : IntegrationTestBase
         }
 
         // When: User requests PDF details
-        var request = new HttpRequestMessage(HttpMethod.Get, $"/pdfs/{pdfId}/text");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/pdfs/{pdfId}/text");
         AddCookies(request, cookies);
 
         var response = await client.SendAsync(request);
@@ -539,7 +539,7 @@ public class PdfUploadEndpointsTests : IntegrationTestBase
         }
 
         // When: User requests PDF details
-        var request = new HttpRequestMessage(HttpMethod.Get, $"/pdfs/{pdfId}/text");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/pdfs/{pdfId}/text");
         AddCookies(request, cookies);
 
         var response = await client.SendAsync(request);
@@ -569,7 +569,7 @@ public class PdfUploadEndpointsTests : IntegrationTestBase
         var client = CreateClientWithoutCookies();
 
         // When: User requests details for non-existent PDF
-        var request = new HttpRequestMessage(HttpMethod.Get, "/pdfs/nonexistent-pdf-id/text");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/pdfs/nonexistent-pdf-id/text");
         AddCookies(request, cookies);
 
         var response = await client.SendAsync(request);
@@ -595,7 +595,7 @@ public class PdfUploadEndpointsTests : IntegrationTestBase
         var client = CreateClientWithoutCookies();
 
         // When: User requests PDF details
-        var response = await client.GetAsync("/pdfs/some-pdf-id/text");
+        var response = await client.GetAsync("/api/v1/pdfs/some-pdf-id/text");
 
         // Then: HTTP 401
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
