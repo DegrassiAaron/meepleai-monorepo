@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System;
+using System.Collections.Generic;
 using Api.Infrastructure;
 using Api.Services;
 using Microsoft.AspNetCore.Hosting;
@@ -32,7 +33,8 @@ public class WebApplicationFactoryFixture : WebApplicationFactory<Program>
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["N8N_ENCRYPTION_KEY"] = "integration-test-encryption-key"
+                ["N8N_ENCRYPTION_KEY"] = "integration-test-encryption-key",
+                ["SLACK_ENCRYPTION_KEY"] = "integration-test-slack-key"
             });
         });
 

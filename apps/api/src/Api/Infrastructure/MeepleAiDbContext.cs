@@ -25,6 +25,7 @@ public class MeepleAiDbContext : DbContext
     public DbSet<AiRequestLogEntity> AiRequestLogs => Set<AiRequestLogEntity>();
     public DbSet<AgentFeedbackEntity> AgentFeedbacks => Set<AgentFeedbackEntity>();
     public DbSet<N8nConfigEntity> N8nConfigs => Set<N8nConfigEntity>();
+    public DbSet<SlackConfigEntity> SlackConfigs => Set<SlackConfigEntity>();
     public DbSet<RuleSpecCommentEntity> RuleSpecComments => Set<RuleSpecCommentEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -340,6 +341,30 @@ public class MeepleAiDbContext : DbContext
                 .HasForeignKey(e => e.CreatedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(e => e.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<SlackConfigEntity>(entity =>
+        {
+            entity.ToTable("slack_configs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasMaxLength(64);
+            entity.Property(e => e.ProjectName).IsRequired().HasMaxLength(128);
+            entity.Property(e => e.ProjectDescription).HasMaxLength(1024);
+            entity.Property(e => e.ProjectUrl).IsRequired().HasMaxLength(512);
+            entity.Property(e => e.DocumentationUrl).HasMaxLength(512);
+            entity.Property(e => e.ContactEmail).HasMaxLength(256);
+            entity.Property(e => e.WorkspaceUrl).HasMaxLength(512);
+            entity.Property(e => e.Channel).IsRequired().HasMaxLength(128);
+            entity.Property(e => e.WebhookUrlEncrypted).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedByUserId).IsRequired().HasMaxLength(64);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+            entity.HasOne(e => e.CreatedBy)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.ProjectName, e.Channel }).IsUnique();
         });
 
         modelBuilder.Entity<RuleSpecCommentEntity>(entity =>

@@ -1,9 +1,8 @@
+using System;
 using Api.Infrastructure;
 using Api.Infrastructure.Entities;
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Api.Services;
 
@@ -11,17 +10,17 @@ public class N8nConfigService
 {
     private readonly MeepleAiDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
+    private readonly ISecretProtector _secretProtector;
     private readonly ILogger<N8nConfigService> _logger;
     public N8nConfigService(
         MeepleAiDbContext db,
         IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
+        ISecretProtectorFactory secretProtectorFactory,
         ILogger<N8nConfigService> logger)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
+        _secretProtector = secretProtectorFactory.Create(EncryptionKeyConfigName, EncryptionKeyPlaceholder);
         _logger = logger;
     }
 
@@ -85,7 +84,7 @@ public class N8nConfigService
             Id = Guid.NewGuid().ToString(),
             Name = request.Name,
             BaseUrl = request.BaseUrl.TrimEnd('/'),
-            ApiKeyEncrypted = EncryptApiKey(request.ApiKey),
+            ApiKeyEncrypted = _secretProtector.Protect(request.ApiKey),
             WebhookUrl = request.WebhookUrl?.TrimEnd('/'),
             IsActive = true,
             CreatedByUserId = userId,
@@ -142,7 +141,7 @@ public class N8nConfigService
 
         if (request.ApiKey != null)
         {
-            config.ApiKeyEncrypted = EncryptApiKey(request.ApiKey);
+            config.ApiKeyEncrypted = _secretProtector.Protect(request.ApiKey);
         }
 
         if (request.WebhookUrl != null)
@@ -198,7 +197,7 @@ public class N8nConfigService
             throw new InvalidOperationException("Configuration not found");
         }
 
-        var apiKey = DecryptApiKey(config.ApiKeyEncrypted);
+        var apiKey = _secretProtector.Unprotect(config.ApiKeyEncrypted);
         var httpClient = _httpClientFactory.CreateClient();
 
         try
@@ -234,60 +233,6 @@ public class N8nConfigService
         }
     }
 
-    private string EncryptApiKey(string apiKey)
-    {
-        var encryptionKey = GetEncryptionKey();
-        using var aes = Aes.Create();
-        aes.Key = encryptionKey;
-        aes.GenerateIV();
-
-        using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-        var plainBytes = Encoding.UTF8.GetBytes(apiKey);
-        var cipherBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
-
-        var result = new byte[aes.IV.Length + cipherBytes.Length];
-        Buffer.BlockCopy(aes.IV, 0, result, 0, aes.IV.Length);
-        Buffer.BlockCopy(cipherBytes, 0, result, aes.IV.Length, cipherBytes.Length);
-
-        return Convert.ToBase64String(result);
-    }
-
-    private string DecryptApiKey(string encryptedApiKey)
-    {
-        var encryptionKey = GetEncryptionKey();
-        var fullCipher = Convert.FromBase64String(encryptedApiKey);
-
-        using var aes = Aes.Create();
-        aes.Key = encryptionKey;
-
-        var iv = new byte[aes.IV.Length];
-        var cipher = new byte[fullCipher.Length - iv.Length];
-
-        Buffer.BlockCopy(fullCipher, 0, iv, 0, iv.Length);
-        Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, cipher.Length);
-
-        aes.IV = iv;
-
-        using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-        var plainBytes = decryptor.TransformFinalBlock(cipher, 0, cipher.Length);
-
-        return Encoding.UTF8.GetString(plainBytes);
-    }
-
     private const string EncryptionKeyConfigName = "N8N_ENCRYPTION_KEY";
     private const string EncryptionKeyPlaceholder = "changeme-replace-with-32-byte-key-in-production";
-
-    private byte[] GetEncryptionKey()
-    {
-        var key = _configuration[EncryptionKeyConfigName]?.Trim();
-
-        if (string.IsNullOrWhiteSpace(key) || key == EncryptionKeyPlaceholder)
-        {
-            throw new InvalidOperationException(
-                $"Missing or invalid n8n encryption key. Set the {EncryptionKeyConfigName} environment variable to a secure value.");
-        }
-
-        using var sha256 = SHA256.Create();
-        return sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
-    }
 }

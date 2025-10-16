@@ -134,6 +134,9 @@ builder.Services.AddHttpClient("OpenRouter", client =>
 // Time provider for testability
 builder.Services.AddSingleton(TimeProvider.System);
 
+builder.Services.AddSingleton<ISecretProtectorFactory, ConfigSecretProtectorFactory>();
+builder.Services.AddSingleton<ISlackMessageBuilder, SlackMessageBuilder>();
+
 // Background task execution
 builder.Services.AddSingleton<IBackgroundTaskService, BackgroundTaskService>();
 
@@ -167,6 +170,7 @@ builder.Services.AddScoped<PdfTextExtractionService>();
 builder.Services.AddScoped<PdfTableExtractionService>();
 builder.Services.AddScoped<PdfStorageService>();
 builder.Services.AddScoped<N8nConfigService>();
+builder.Services.AddScoped<SlackConfigService>();
 builder.Services.AddScoped<ChatService>();
 
 // AUTH-03: Session management service
@@ -2036,6 +2040,156 @@ v1Api.MapPost("/admin/n8n/{configId}/test", async (string configId, HttpContext 
     catch (InvalidOperationException ex)
     {
         logger.LogWarning("Failed to test n8n config: {Error}", ex.Message);
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+// ADM-05: Slack project configuration endpoints
+v1Api.MapGet("/admin/slack", async (HttpContext context, SlackConfigService slackService, CancellationToken ct) =>
+{
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!string.Equals(session.User.Role, UserRole.Admin.ToString(), StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    var configs = await slackService.GetConfigsAsync(ct);
+    return Results.Json(new { configs });
+});
+
+v1Api.MapGet("/admin/slack/{configId}", async (string configId, HttpContext context, SlackConfigService slackService, CancellationToken ct) =>
+{
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!string.Equals(session.User.Role, UserRole.Admin.ToString(), StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    var config = await slackService.GetConfigAsync(configId, ct);
+
+    if (config == null)
+    {
+        return Results.NotFound(new { error = "Configuration not found" });
+    }
+
+    return Results.Json(config);
+});
+
+v1Api.MapPost("/admin/slack", async (CreateSlackConfigRequest request, HttpContext context, SlackConfigService slackService, ILogger<Program> logger, CancellationToken ct) =>
+{
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!string.Equals(session.User.Role, UserRole.Admin.ToString(), StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    try
+    {
+        logger.LogInformation("Admin {UserId} creating Slack config for project {Project}", session.User.Id, request.ProjectName);
+        var config = await slackService.CreateConfigAsync(session.User.Id, request, ct);
+        logger.LogInformation("Slack config {ConfigId} created", config.Id);
+        return Results.Json(config);
+    }
+    catch (InvalidOperationException ex)
+    {
+        logger.LogWarning("Failed to create Slack config: {Error}", ex.Message);
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+v1Api.MapPut("/admin/slack/{configId}", async (string configId, UpdateSlackConfigRequest request, HttpContext context, SlackConfigService slackService, ILogger<Program> logger, CancellationToken ct) =>
+{
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!string.Equals(session.User.Role, UserRole.Admin.ToString(), StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    try
+    {
+        logger.LogInformation("Admin {UserId} updating Slack config {ConfigId}", session.User.Id, configId);
+        var config = await slackService.UpdateConfigAsync(configId, request, ct);
+        logger.LogInformation("Slack config {ConfigId} updated", config.Id);
+        return Results.Json(config);
+    }
+    catch (InvalidOperationException ex)
+    {
+        logger.LogWarning("Failed to update Slack config: {Error}", ex.Message);
+        if (string.Equals(ex.Message, "Configuration not found", StringComparison.Ordinal))
+        {
+            return Results.NotFound(new { error = ex.Message });
+        }
+
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+v1Api.MapDelete("/admin/slack/{configId}", async (string configId, HttpContext context, SlackConfigService slackService, ILogger<Program> logger, CancellationToken ct) =>
+{
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!string.Equals(session.User.Role, UserRole.Admin.ToString(), StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    logger.LogInformation("Admin {UserId} deleting Slack config {ConfigId}", session.User.Id, configId);
+    var deleted = await slackService.DeleteConfigAsync(configId, ct);
+
+    if (!deleted)
+    {
+        return Results.NotFound(new { error = "Configuration not found" });
+    }
+
+    logger.LogInformation("Slack config {ConfigId} deleted", configId);
+    return Results.Json(new { ok = true });
+});
+
+v1Api.MapGet("/admin/slack/{configId}/message", async (string configId, HttpContext context, SlackConfigService slackService, ILogger<Program> logger, CancellationToken ct) =>
+{
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!string.Equals(session.User.Role, UserRole.Admin.ToString(), StringComparison.OrdinalIgnoreCase))
+    {
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+    }
+
+    try
+    {
+        logger.LogInformation("Admin {UserId} requesting Slack message for config {ConfigId}", session.User.Id, configId);
+        var message = await slackService.BuildProjectInfoMessageAsync(configId, ct);
+        return Results.Json(message);
+    }
+    catch (InvalidOperationException ex)
+    {
+        logger.LogWarning("Failed to build Slack message: {Error}", ex.Message);
+        if (string.Equals(ex.Message, "Configuration not found", StringComparison.Ordinal))
+        {
+            return Results.NotFound(new { error = ex.Message });
+        }
+
         return Results.BadRequest(new { error = ex.Message });
     }
 });

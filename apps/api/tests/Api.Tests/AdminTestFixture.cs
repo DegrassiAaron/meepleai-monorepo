@@ -30,7 +30,8 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
 
     protected readonly WebApplicationFactoryFixture Factory;
     private readonly List<string> _testUserIds = new();
-    private readonly List<string> _testConfigIds = new();
+    private readonly List<string> _testN8nConfigIds = new();
+    private readonly List<string> _testSlackConfigIds = new();
 
     protected AdminTestFixture(WebApplicationFactoryFixture factory)
     {
@@ -86,12 +87,20 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
             }
 
             // Cleanup N8n configs
-            if (_testConfigIds.Count > 0)
+            if (_testN8nConfigIds.Count > 0)
             {
                 var configs = await db.N8nConfigs
-                    .Where(c => _testConfigIds.Contains(c.Id))
+                    .Where(c => _testN8nConfigIds.Contains(c.Id))
                     .ToListAsync();
                 db.N8nConfigs.RemoveRange(configs);
+            }
+
+            if (_testSlackConfigIds.Count > 0)
+            {
+                var slackConfigs = await db.SlackConfigs
+                    .Where(c => _testSlackConfigIds.Contains(c.Id))
+                    .ToListAsync();
+                db.SlackConfigs.RemoveRange(slackConfigs);
             }
 
             await db.SaveChangesAsync();
@@ -322,7 +331,39 @@ public abstract class AdminTestFixture : IClassFixture<WebApplicationFactoryFixt
             default);
 
         // Track config ID for cleanup
-        _testConfigIds.Add(config.Id);
+        _testN8nConfigIds.Add(config.Id);
+
+        return config;
+    }
+
+    // ===== Slack Configuration Helpers =====
+
+    protected async Task ClearSlackConfigsAsync()
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MeepleAiDbContext>();
+        db.SlackConfigs.RemoveRange(db.SlackConfigs);
+        await db.SaveChangesAsync();
+    }
+
+    protected async Task<SlackConfigDto> CreateSlackConfigAsync(string userId, string projectName)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<SlackConfigService>();
+        var config = await service.CreateConfigAsync(
+            userId,
+            new CreateSlackConfigRequest(
+                projectName,
+                "Descrizione del progetto",
+                "https://project.example/",
+                "https://docs.project.example/",
+                "team@project.example",
+                "https://workspace.slack.com/",
+                "#project-channel",
+                "https://hooks.slack.com/services/example"),
+            default);
+
+        _testSlackConfigIds.Add(config.Id);
 
         return config;
     }

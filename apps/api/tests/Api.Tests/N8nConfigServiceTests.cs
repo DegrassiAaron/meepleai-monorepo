@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using Api.Infrastructure;
 using Api.Infrastructure.Entities;
@@ -5,7 +6,6 @@ using Api.Models;
 using Api.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -40,24 +40,42 @@ public class N8nConfigServiceTests
         await dbContext.SaveChangesAsync();
     }
 
+    private sealed class TestSecretProtectorFactory : ISecretProtectorFactory
+    {
+        private readonly Func<string, string, ISecretProtector> _factory;
+
+        public TestSecretProtectorFactory(Func<string, string, ISecretProtector> factory)
+        {
+            _factory = factory;
+        }
+
+        public ISecretProtector Create(string encryptionKeyConfigName, string encryptionKeyPlaceholder)
+        {
+            return _factory(encryptionKeyConfigName, encryptionKeyPlaceholder);
+        }
+    }
+
+    private sealed class PassthroughSecretProtector : ISecretProtector
+    {
+        public string Protect(string secret) => $"enc::{secret}";
+        public string Unprotect(string protectedSecret) => protectedSecret.Replace("enc::", string.Empty, StringComparison.Ordinal);
+    }
+
     private static N8nConfigService CreateService(
         MeepleAiDbContext dbContext,
         Mock<IHttpClientFactory>? httpClientFactoryMock = null,
-        string? encryptionKey = "test-encryption-key")
+        ISecretProtectorFactory? secretProtectorFactory = null)
     {
         httpClientFactoryMock ??= new Mock<IHttpClientFactory>();
         httpClientFactoryMock
             .Setup(f => f.CreateClient(It.IsAny<string>()))
             .Returns(new HttpClient());
 
-        var configurationMock = new Mock<IConfiguration>();
-        configurationMock
-            .Setup(c => c[It.Is<string>(key => key == "N8N_ENCRYPTION_KEY")])
-            .Returns(encryptionKey);
-
         var loggerMock = new Mock<ILogger<N8nConfigService>>();
 
-        return new N8nConfigService(dbContext, httpClientFactoryMock.Object, configurationMock.Object, loggerMock.Object);
+        secretProtectorFactory ??= new TestSecretProtectorFactory((_, _) => new PassthroughSecretProtector());
+
+        return new N8nConfigService(dbContext, httpClientFactoryMock.Object, secretProtectorFactory, loggerMock.Object);
     }
 
     [Fact]
@@ -66,7 +84,8 @@ public class N8nConfigServiceTests
         await using var dbContext = CreateInMemoryContext();
         await SeedUserAsync(dbContext, "user");
 
-        var service = CreateService(dbContext, encryptionKey: null);
+        var secretFactory = new TestSecretProtectorFactory((_, _) => throw new InvalidOperationException("missing"));
+        var service = CreateService(dbContext, secretProtectorFactory: secretFactory);
 
         var act = () => service.CreateConfigAsync(
             "user",
@@ -82,8 +101,17 @@ public class N8nConfigServiceTests
         await using var dbContext = CreateInMemoryContext();
         await SeedUserAsync(dbContext, "user");
 
-        const string placeholder = "changeme-replace-with-32-byte-key-in-production";
-        var service = CreateService(dbContext, encryptionKey: placeholder);
+        var secretFactory = new TestSecretProtectorFactory((_, placeholder) =>
+        {
+            if (placeholder == "changeme-replace-with-32-byte-key-in-production")
+            {
+                throw new InvalidOperationException("placeholder");
+            }
+
+            return new PassthroughSecretProtector();
+        });
+
+        var service = CreateService(dbContext, secretProtectorFactory: secretFactory);
 
         var act = () => service.CreateConfigAsync(
             "user",

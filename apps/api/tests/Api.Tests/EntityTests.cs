@@ -93,4 +93,22 @@ public class EntityTests
         Assert.Null(log.IpAddress);
         Assert.Null(log.UserAgent);
     }
+
+    [Fact]
+    public void SlackConfigEntity_DefaultsToActive()
+    {
+        var config = new SlackConfigEntity
+        {
+            ProjectName = "MeepleAI",
+            ProjectUrl = "https://meeple.ai",
+            Channel = "#meepleai",
+            WebhookUrlEncrypted = "secret",
+            CreatedByUserId = "admin"
+        };
+
+        Assert.True(config.IsActive);
+        Assert.False(string.IsNullOrWhiteSpace(config.Id));
+        Assert.True(config.CreatedAt <= DateTime.UtcNow);
+        Assert.True(config.UpdatedAt <= DateTime.UtcNow);
+    }
 }

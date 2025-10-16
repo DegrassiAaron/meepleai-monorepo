@@ -119,6 +119,49 @@ public record N8nTestResult(
     int? LatencyMs
 );
 
+// ADM-05: Slack configuration models
+public record SlackConfigDto(
+    string Id,
+    string ProjectName,
+    string? ProjectDescription,
+    string ProjectUrl,
+    string? DocumentationUrl,
+    string? ContactEmail,
+    string? WorkspaceUrl,
+    string Channel,
+    bool IsActive,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+);
+
+public record CreateSlackConfigRequest(
+    string ProjectName,
+    string? ProjectDescription,
+    string ProjectUrl,
+    string? DocumentationUrl,
+    string? ContactEmail,
+    string? WorkspaceUrl,
+    string Channel,
+    string WebhookUrl
+);
+
+public record UpdateSlackConfigRequest(
+    string? ProjectName,
+    string? ProjectDescription,
+    string? ProjectUrl,
+    string? DocumentationUrl,
+    string? ContactEmail,
+    string? WorkspaceUrl,
+    string? Channel,
+    string? WebhookUrl,
+    bool? IsActive
+);
+
+public record SlackMessageDto(
+    string Channel,
+    string Text
+);
+
 // UI-01: Chat management models
 public record ChatDto(
     Guid Id,
