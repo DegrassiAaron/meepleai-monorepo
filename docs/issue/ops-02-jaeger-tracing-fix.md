@@ -403,14 +403,63 @@ success: true
 
 - ✅ **Build**: Clean build with no errors
 - ✅ **Tests**: 20/20 tests passing
-- ✅ **Traces Visible**: Service "MeepleAI.Api" appears in Jaeger
+- ⚠️ **Traces Visible**: Traces are being exported to Jaeger, but service name shows as "jaeger" instead of "MeepleAI.Api"
 - ✅ **Spans Created**: HTTP requests generate trace spans
 - ✅ **Tags Present**: Custom tags visible in span details
 - ✅ **Filtering Works**: Health checks and metrics excluded from traces
 - ✅ **Performance**: < 2% CPU overhead with 100% sampling
 
+## Known Issues
+
+### Service Name Not Appearing Correctly in Jaeger (RESIDUAL ISSUE)
+
+**Status**: ⚠️ Partially Resolved
+
+**Problem**:
+- Traces ARE being exported to Jaeger successfully
+- Traces ARE visible in Jaeger UI (20+ traces confirmed)
+- However, service name appears as "jaeger" instead of "MeepleAI.Api" in the service dropdown
+
+**Evidence**:
+- API logs show correct configuration: `[OpenTelemetry] Service name: MeepleAI.Api, version: 1.0.0`
+- Environment variables correctly set: `OTEL_SERVICE_NAME=MeepleAI.Api`
+- `ConfigureResource().AddService(serviceName: "MeepleAI.Api", ...)` is called correctly
+- OTLP endpoint reachable: `curl http://jaeger:4318` returns 405 (correct - needs POST)
+- Jaeger API shows only one service: `{"data": ["jaeger"]}`
+
+**Investigation Done**:
+1. ✅ Verified `MeepleAiActivitySources` class created correctly
+2. ✅ Verified Activity Sources added to tracing configuration
+3. ✅ Verified instrumentation (ASP.NET Core + HTTP Client) configured
+4. ✅ Verified OTLP exporter endpoint configured correctly
+5. ✅ Attempted `.AddEnvironmentVariableDetector()` (method doesn't exist - removed)
+6. ✅ Verified manual reading of environment variables with fallback
+7. ✅ Multiple rebuilds with `--no-cache` to ensure fresh code
+8. ✅ Verified traces are being generated (visible in Jaeger UI)
+9. ❌ Service name still shows as "jaeger"
+
+**Hypothesis**:
+The issue appears to be in how OpenTelemetry .NET SDK serializes resource attributes to the OTLP protocol. The `service.name` attribute may not be properly included in the OTLP payload sent to Jaeger, or Jaeger v2 may be extracting the service name from a different attribute.
+
+**Next Steps** (for future investigation):
+1. Enable OpenTelemetry SDK debug logging to see actual OTLP payloads
+2. Capture OTLP HTTP traffic with Wireshark/tcpdump to inspect payload
+3. Check if `ResourceBuilder.CreateDefault()` works differently than manual `.AddService()`
+4. Test with a minimal ASP.NET Core + OpenTelemetry example to isolate issue
+5. Consult OpenTelemetry .NET community on GitHub/Slack
+6. Consider using Jaeger v1 temporarily to verify if it's a Jaeger v2 specific issue
+
+**Workaround**:
+None currently available. Traces are functional but service name filtering in Jaeger UI is not working.
+
+**Impact**:
+- **Low**: Traces are being captured and exported successfully
+- **Medium**: Cannot filter traces by service name in Jaeger UI
+- **Observation**: All traces currently attributed to "jaeger" service
+
 ---
 
-**Resolution Date**: 2025-10-16
+**Resolution Date**: 2025-10-17
+**Status**: Partially Resolved (traces working, service name issue remains)
 **Resolved By**: Claude Code
 **Verification**: Manual + Automated Tests

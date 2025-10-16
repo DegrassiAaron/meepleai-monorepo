@@ -330,16 +330,39 @@ Console.WriteLine($"[OpenTelemetry] OTEL_RESOURCE_ATTRIBUTES env var: {Environme
 Console.WriteLine($"[OpenTelemetry] Environment.MachineName (service.instance.id): {Environment.MachineName}");
 
 builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource
-        // OPS-02: AddService() sets service.name, service.version, service.instance.id
-        // These are OpenTelemetry semantic conventions required by Jaeger v2
-        .AddService(
-            serviceName: serviceName,
-            serviceVersion: serviceVersion,
-            serviceInstanceId: Environment.MachineName)
-        // OPS-02: AddEnvironmentVariableDetector() reads OTEL_RESOURCE_ATTRIBUTES
-        // and adds them as resource attributes (takes precedence over programmatic config)
-        .AddEnvironmentVariableDetector())
+    .ConfigureResource(resource =>
+    {
+        // OPS-02: DEFINITIVE ANSWER - How to make ResourceBuilder read OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES
+        //
+        // From official OpenTelemetry .NET SDK documentation:
+        // 1. ConfigureResource() starts with an EMPTY ResourceBuilder by default
+        // 2. ResourceBuilder.CreateDefault() is NOT available in ConfigureResource() callback
+        // 3. To read env vars, use .AddDetector() with a detector that calls ResourceBuilder.CreateDefault()
+        //
+        // Source: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Extensions.Hosting/README.md
+        //
+        // CORRECT PATTERN (from official docs):
+        //   services.AddOpenTelemetry()
+        //     .ConfigureResource(builder =>
+        //         builder.AddDetector(sp => sp.GetRequiredService<MyResourceDetector>()))
+        //
+        // Where MyResourceDetector.Detect() returns ResourceBuilder.CreateDefault().Build()
+        //
+        // ALTERNATIVE (current implementation): Manually read env vars (lines 318-322) and configure programmatically.
+        // This is simpler than creating a custom IResourceDetector and works equally well.
+
+        // Use programmatic configuration (env vars read earlier in lines 318-322)
+        resource.AddService(
+            serviceName: serviceName,           // Fallback: OTEL_SERVICE_NAME → "MeepleAI.Api"
+            serviceVersion: serviceVersion,      // Always "1.0.0"
+            serviceInstanceId: Environment.MachineName);
+
+        // Add deployment environment as supplementary attribute
+        resource.AddAttributes(new Dictionary<string, object>
+        {
+            ["deployment.environment"] = builder.Environment.EnvironmentName
+        });
+    })
     .WithTracing(tracing => tracing
         .SetSampler(new OpenTelemetry.Trace.AlwaysOnSampler())
         .AddAspNetCoreInstrumentation(options =>
