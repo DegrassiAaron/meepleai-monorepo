@@ -784,8 +784,8 @@ v1Api.MapPost("/auth/session/extend", async (
     HttpContext context,
     MeepleAiDbContext db,
     ISessionCacheService? sessionCache,
-    TimeProvider timeProvider,
     IConfiguration config,
+    TimeProvider timeProvider,
     CancellationToken ct) =>
 {
     // Require authentication
@@ -815,10 +815,11 @@ v1Api.MapPost("/auth/session/extend", async (
         return Results.Unauthorized();
     }
 
-    // Update LastSeenAt and invalidate cache
+    // Update LastSeenAt to extend session
     dbSession.LastSeenAt = now;
     await db.SaveChangesAsync(ct);
 
+    // Invalidate cache to force refresh on next request
     if (sessionCache != null)
     {
         await sessionCache.InvalidateAsync(tokenHash, ct);
@@ -826,7 +827,7 @@ v1Api.MapPost("/auth/session/extend", async (
 
     // Calculate new remaining minutes
     var expiryTime = now.AddDays(inactivityTimeoutDays);
-    var remainingMinutes = (int)(expiryTime - now).TotalMinutes;
+    var remainingMinutes = (int)Math.Max(0, (expiryTime - now).TotalMinutes);
 
     var response = new SessionStatusResponse(
         dbSession.ExpiresAt,
