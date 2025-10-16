@@ -97,6 +97,48 @@ public static class MeepleAiActivitySources
 2. Removed incorrect `MeepleAiMetrics.MeterName` from tracing configuration
 3. Added explicit `Microsoft.AspNetCore` and `System.Net.Http` sources for framework traces
 4. Added all custom MeepleAI Activity Sources for domain-specific tracing
+5. Added `.AddEnvironmentVariableDetector()` to read `OTEL_RESOURCE_ATTRIBUTES` environment variable
+
+### 2b. Fixed Service Name with Environment Variables
+
+**Issue Discovered**: While traces were being exported, the service name was not appearing correctly in Jaeger UI (showing as "jaeger" instead of "MeepleAI.Api").
+
+**Root Cause**: Jaeger v2 requires service name to be present in OTLP resource semantic conventions. According to OpenTelemetry specification, environment variables take highest precedence and ensure proper serialization.
+
+**Solution Applied**:
+
+1. **Environment Variables** (`infra/env/api.env.dev`):
+```bash
+OTEL_SERVICE_NAME=MeepleAI.Api
+OTEL_RESOURCE_ATTRIBUTES=service.name=MeepleAI.Api,service.version=1.0.0,deployment.environment=development
+```
+
+2. **Enhanced Configuration** (`Program.cs:313-342`):
+```csharp
+// Read environment variables with fallback to configuration
+var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")
+    ?? builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+    ?? "http://jaeger:4318";
+var serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME")
+    ?? builder.Configuration["OTEL_SERVICE_NAME"]
+    ?? "MeepleAI.Api";
+
+// Debug logging for troubleshooting
+Console.WriteLine($"[OpenTelemetry] Service name: {serviceName}, version: {serviceVersion}");
+Console.WriteLine($"[OpenTelemetry] OTEL_SERVICE_NAME env var: {Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "(not set)"}");
+Console.WriteLine($"[OpenTelemetry] OTEL_RESOURCE_ATTRIBUTES env var: {Environment.GetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES") ?? "(not set)"}");
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: serviceName, serviceVersion: serviceVersion, serviceInstanceId: Environment.MachineName)
+        .AddEnvironmentVariableDetector())  // ✅ Reads OTEL_RESOURCE_ATTRIBUTES
+```
+
+**Why This Works**:
+- `OTEL_SERVICE_NAME` sets the primary service name (highest precedence per OpenTelemetry spec)
+- `OTEL_RESOURCE_ATTRIBUTES` adds additional semantic convention attributes
+- `.AddEnvironmentVariableDetector()` ensures environment variables are properly merged into resource attributes
+- Environment variables ensure OTLP export includes service.name in resource attributes, which Jaeger v2 requires for service discovery
 
 ### 3. Instrumented Services with Custom Traces
 

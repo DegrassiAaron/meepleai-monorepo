@@ -311,16 +311,35 @@ builder.Services.AddCors(options =>
 });
 
 // OPS-02: OpenTelemetry configuration
-var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? "http://jaeger:4318";
-var serviceName = "MeepleAI.Api";
+// Read environment variables (OPS-02: Fix for Jaeger v2 service name not appearing)
+var otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")
+    ?? builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+    ?? "http://jaeger:4318";
+var serviceName = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME")
+    ?? builder.Configuration["OTEL_SERVICE_NAME"]
+    ?? "MeepleAI.Api";
+var resourceAttributes = Environment.GetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES")
+    ?? builder.Configuration["OTEL_RESOURCE_ATTRIBUTES"];
 var serviceVersion = "1.0.0";
+
+// Debug: Log OTLP configuration for troubleshooting
+Console.WriteLine($"[OpenTelemetry] Configuring OTLP exporter with endpoint: {otlpEndpoint}");
+Console.WriteLine($"[OpenTelemetry] Service name: {serviceName}, version: {serviceVersion}");
+Console.WriteLine($"[OpenTelemetry] OTEL_SERVICE_NAME env var: {Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "(not set)"}");
+Console.WriteLine($"[OpenTelemetry] OTEL_RESOURCE_ATTRIBUTES env var: {Environment.GetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES") ?? "(not set)"}");
+Console.WriteLine($"[OpenTelemetry] Environment.MachineName (service.instance.id): {Environment.MachineName}");
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
+        // OPS-02: AddService() sets service.name, service.version, service.instance.id
+        // These are OpenTelemetry semantic conventions required by Jaeger v2
         .AddService(
             serviceName: serviceName,
             serviceVersion: serviceVersion,
-            serviceInstanceId: Environment.MachineName))
+            serviceInstanceId: Environment.MachineName)
+        // OPS-02: AddEnvironmentVariableDetector() reads OTEL_RESOURCE_ATTRIBUTES
+        // and adds them as resource attributes (takes precedence over programmatic config)
+        .AddEnvironmentVariableDetector())
     .WithTracing(tracing => tracing
         .SetSampler(new OpenTelemetry.Trace.AlwaysOnSampler())
         .AddAspNetCoreInstrumentation(options =>

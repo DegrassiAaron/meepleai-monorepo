@@ -596,6 +596,20 @@ grafana:
 
 See `docs/issue/ops-02-jaeger-tracing-fix.md` for complete resolution details.
 
+### ✅ Service Name Fix (2025-10-16)
+
+**Issue**: Traces appearing in Jaeger v2 but service name showing as "jaeger" instead of "MeepleAI.Api".
+
+**Root Cause**: Service name configured programmatically via `ConfigureResource().AddService()` but not properly exported to OTLP resource attributes. OpenTelemetry specification requires environment variables for guaranteed service name propagation.
+
+**Solution**: Added standard OpenTelemetry environment variables to `infra/env/api.env.dev`:
+- `OTEL_SERVICE_NAME=MeepleAI.Api` (highest precedence per spec)
+- `OTEL_RESOURCE_ATTRIBUTES=service.name=MeepleAI.Api,service.version=1.0.0,deployment.environment=development`
+
+**Result**: Service name now correctly appears as "MeepleAI.Api" in Jaeger service dropdown.
+
+See `docs/tecnic/ops-02-jaeger-service-name-fix.md` for complete technical details, verification steps, and troubleshooting guide.
+
 ## Risks & Mitigation
 
 | Risk | Impact | Probability | Mitigation |
