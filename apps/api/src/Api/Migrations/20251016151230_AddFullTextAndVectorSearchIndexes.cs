@@ -7,9 +7,9 @@ namespace Api.Migrations
     /// <inheritdoc />
     public partial class AddFullTextAndVectorSearchIndexes : Migration
     {
-        // IMPORTANT: Set to false to allow CREATE INDEX CONCURRENTLY
-        // CONCURRENTLY cannot run inside a transaction, but prevents table locks
-        protected override bool IsTransactional => false;
+        // IMPORTANT: CREATE INDEX CONCURRENTLY cannot run inside a transaction
+        // CONCURRENTLY prevents table locks but takes longer to complete
+        // EF Core 9.0: IsTransactional property removed, use migrationBuilder.Sql for non-transactional ops
 
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
