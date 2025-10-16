@@ -299,13 +299,25 @@ public class RagEvaluationIntegrationTests : IAsyncLifetime
 
     private async Task SeedTestDataAsync()
     {
-        // Seed games for testing
-        _dbContext!.Games.AddRange(
-            new GameEntity { Id = "tic-tac-toe", Name = "Tic-Tac-Toe", CreatedAt = DateTime.UtcNow },
-            new GameEntity { Id = "chess", Name = "Chess", CreatedAt = DateTime.UtcNow }
-        );
+        // Seed games for testing - only if they don't already exist
+        // (seed migration may have already created them)
+        var tictactoeExists = await _dbContext!.Games.AnyAsync(g => g.Id == "tic-tac-toe");
+        var chessExists = await _dbContext.Games.AnyAsync(g => g.Id == "chess");
 
-        await _dbContext.SaveChangesAsync();
+        if (!tictactoeExists)
+        {
+            _dbContext.Games.Add(new GameEntity { Id = "tic-tac-toe", Name = "Tic-Tac-Toe", CreatedAt = DateTime.UtcNow });
+        }
+
+        if (!chessExists)
+        {
+            _dbContext.Games.Add(new GameEntity { Id = "chess", Name = "Chess", CreatedAt = DateTime.UtcNow });
+        }
+
+        if (!tictactoeExists || !chessExists)
+        {
+            await _dbContext.SaveChangesAsync();
+        }
     }
 
     private async Task IndexTestDocumentsAsync()
