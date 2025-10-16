@@ -8,6 +8,13 @@ export const getApiBase = (): string => {
   return API_BASE_FALLBACK;
 };
 
+// TypeScript types for session management (AUTH-05)
+export interface SessionStatusResponse {
+  expiresAt: string;
+  lastSeenAt: string | null;
+  remainingMinutes: number;
+}
+
 // TypeScript types for RuleSpec comments
 export interface RuleSpecComment {
   id: string;
@@ -93,6 +100,16 @@ export const api = {
       throw new Error(`API ${path} ${res.status}`);
     }
     // DELETE returns 204 NoContent, no body to parse
+  },
+
+  // AUTH-05: Session Management API
+  auth: {
+    async getSessionStatus(): Promise<SessionStatusResponse | null> {
+      return api.get<SessionStatusResponse>('/api/v1/auth/session/status');
+    },
+    async extendSession(): Promise<SessionStatusResponse> {
+      return api.post<SessionStatusResponse>('/api/v1/auth/session/extend');
+    }
   },
 
   // RuleSpec Comment API

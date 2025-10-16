@@ -732,6 +732,110 @@ v1Api.MapGet("/auth/me", (HttpContext context) =>
     return Results.Unauthorized();
 });
 
+// AUTH-05: Session status and extension endpoints
+v1Api.MapGet("/auth/session/status", async (
+    HttpContext context,
+    MeepleAiDbContext db,
+    IConfiguration config,
+    TimeProvider timeProvider,
+    CancellationToken ct) =>
+{
+    // Require authentication
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    var now = timeProvider.GetUtcNow().UtcDateTime;
+    var inactivityTimeoutDays = config.GetValue<int>("Authentication:SessionManagement:InactivityTimeoutDays", 30);
+
+    // Get session from database to access LastSeenAt
+    var sessionCookieName = GetSessionCookieName(context);
+    if (!context.Request.Cookies.TryGetValue(sessionCookieName, out var token) || string.IsNullOrWhiteSpace(token))
+    {
+        return Results.Unauthorized();
+    }
+
+    var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token));
+    var tokenHash = Convert.ToBase64String(hash);
+
+    var dbSession = await db.UserSessions
+        .FirstOrDefaultAsync(s => s.TokenHash == tokenHash, ct);
+
+    if (dbSession == null || dbSession.RevokedAt != null)
+    {
+        return Results.Unauthorized();
+    }
+
+    // Calculate remaining minutes until session expires from inactivity
+    var lastActivity = dbSession.LastSeenAt ?? dbSession.CreatedAt;
+    var expiryTime = lastActivity.AddDays(inactivityTimeoutDays);
+    var remainingMinutes = (int)Math.Max(0, (expiryTime - now).TotalMinutes);
+
+    var response = new SessionStatusResponse(
+        dbSession.ExpiresAt,
+        dbSession.LastSeenAt,
+        remainingMinutes);
+
+    return Results.Json(response);
+});
+
+v1Api.MapPost("/auth/session/extend", async (
+    HttpContext context,
+    MeepleAiDbContext db,
+    ISessionCacheService? sessionCache,
+    TimeProvider timeProvider,
+    IConfiguration config,
+    CancellationToken ct) =>
+{
+    // Require authentication
+    if (!context.Items.TryGetValue(nameof(ActiveSession), out var value) || value is not ActiveSession session)
+    {
+        return Results.Unauthorized();
+    }
+
+    var now = timeProvider.GetUtcNow().UtcDateTime;
+    var inactivityTimeoutDays = config.GetValue<int>("Authentication:SessionManagement:InactivityTimeoutDays", 30);
+
+    // Get session from database
+    var sessionCookieName = GetSessionCookieName(context);
+    if (!context.Request.Cookies.TryGetValue(sessionCookieName, out var token) || string.IsNullOrWhiteSpace(token))
+    {
+        return Results.Unauthorized();
+    }
+
+    var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token));
+    var tokenHash = Convert.ToBase64String(hash);
+
+    var dbSession = await db.UserSessions
+        .FirstOrDefaultAsync(s => s.TokenHash == tokenHash, ct);
+
+    if (dbSession == null || dbSession.RevokedAt != null)
+    {
+        return Results.Unauthorized();
+    }
+
+    // Update LastSeenAt and invalidate cache
+    dbSession.LastSeenAt = now;
+    await db.SaveChangesAsync(ct);
+
+    if (sessionCache != null)
+    {
+        await sessionCache.InvalidateAsync(tokenHash, ct);
+    }
+
+    // Calculate new remaining minutes
+    var expiryTime = now.AddDays(inactivityTimeoutDays);
+    var remainingMinutes = (int)(expiryTime - now).TotalMinutes;
+
+    var response = new SessionStatusResponse(
+        dbSession.ExpiresAt,
+        now,
+        remainingMinutes);
+
+    return Results.Json(response);
+});
+
 // API-01: AI agent endpoints (versioned)
 v1Api.MapPost("/agents/qa", async (QaRequest req, HttpContext context, RagService rag, ChatService chatService, AiRequestLogService aiLog, ILogger<Program> logger, CancellationToken ct) =>
 {
