@@ -126,7 +126,7 @@ async function readFileHeader(file: File, bytesToRead: number): Promise<string> 
     reader.onload = (e) => {
       if (e.target?.result) {
         const bytes = new Uint8Array(e.target.result as ArrayBuffer);
-        const header = String.fromCharCode(...bytes);
+        const header = String.fromCharCode(...Array.from(bytes));
         resolve(header);
       } else {
         reject(new Error('Failed to read file'));
