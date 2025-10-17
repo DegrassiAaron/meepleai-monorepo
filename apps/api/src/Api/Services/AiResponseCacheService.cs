@@ -220,8 +220,9 @@ return total";
             // Delete each cache key and its metadata
             foreach (var cacheKey in cacheKeys)
             {
-                await db.KeyDeleteAsync(cacheKey);
-                await db.KeyDeleteAsync($"{cacheKey}:meta");
+                var key = cacheKey.ToString();
+                await db.KeyDeleteAsync(key);
+                await db.KeyDeleteAsync($"{key}:meta");
             }
 
             // Delete the tag index itself
