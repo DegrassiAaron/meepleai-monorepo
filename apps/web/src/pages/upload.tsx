@@ -12,8 +12,7 @@ import { categorizeError, type CategorizedError, extractCorrelationId } from '..
 import { retryWithBackoff, isRetryableError } from '../lib/retryUtils';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 import { ProcessingProgress } from '../components/ProcessingProgress';
-// TODO PDF-05: Enable once MultiFileUpload component is fully implemented
-// import { MultiFileUpload } from '../components/MultiFileUpload';
+import { MultiFileUpload } from '../components/MultiFileUpload';
 
 // Dynamic import to prevent SSR issues with react-pdf (requires browser APIs like DOMMatrix)
 const PdfPreview = dynamic(() => import('../components/PdfPreview').then(mod => ({ default: mod.PdfPreview })), {
@@ -1024,8 +1023,8 @@ export default function UploadPage() {
                 )}
               </form>
 
-              {/* PDF-05: Multi-File Upload Section (TODO: Enable when fully implemented) */}
-              {/* {confirmedGameId && confirmedGame && (
+              {/* PDF-05: Multi-File Upload Section */}
+              {confirmedGameId && confirmedGame && (
                 <div style={{ marginTop: '32px', marginBottom: '32px' }}>
                   <MultiFileUpload
                     gameId={confirmedGameId}
@@ -1037,7 +1036,7 @@ export default function UploadPage() {
                     }}
                   />
                 </div>
-              )} */}
+              )}
 
               <div
                 style={{

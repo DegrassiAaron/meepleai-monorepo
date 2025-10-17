@@ -5,7 +5,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { retryWithBackoff, isRetryableError } from '../lib/retryUtils';
-import { ApiError, extractCorrelationId } from '../lib/errorUtils';
+import { extractCorrelationId } from '../lib/errorUtils';
+import { ApiError } from '../lib/api';
 
 export type UploadStatus = 'pending' | 'uploading' | 'processing' | 'success' | 'failed' | 'cancelled';
 
@@ -279,7 +280,7 @@ export function useUploadQueue(options: UseUploadQueueOptions = {}) {
         const completedItem = { ...item, status: 'success' as UploadStatus, progress: 100, pdfId: data.documentId };
         onUploadComplete?.(completedItem);
 
-      } catch (error) {
+      } catch (error: unknown) {
         // Check if it was cancelled
         if (error instanceof DOMException && error.name === 'AbortError') {
           // Already handled by cancelUpload
