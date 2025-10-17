@@ -11,6 +11,7 @@ import { categorizeError, type CategorizedError, extractCorrelationId } from '..
 import { retryWithBackoff, isRetryableError } from '../lib/retryUtils';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 import { ProcessingProgress } from '../components/ProcessingProgress';
+import { PdfPreview } from '../components/PdfPreview';
 
 interface PdfDocument {
   id: string;
@@ -983,9 +984,18 @@ export default function UploadPage() {
                   )}
                 </div>
 
+                {/* PDF Preview */}
+                {file && Object.keys(validationErrors).length === 0 && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: 600 }}>Preview</h3>
+                    <PdfPreview file={file} />
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={uploading || !file || !confirmedGameId}
+                  data-testid="upload-button"
                   style={{
                     padding: '12px 24px',
                     backgroundColor: uploading || !file || !confirmedGameId ? '#ccc' : '#0070f3',
