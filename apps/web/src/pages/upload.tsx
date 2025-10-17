@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   type ChangeEvent,
   type FormEvent,
@@ -11,7 +12,12 @@ import { categorizeError, type CategorizedError, extractCorrelationId } from '..
 import { retryWithBackoff, isRetryableError } from '../lib/retryUtils';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 import { ProcessingProgress } from '../components/ProcessingProgress';
-import { PdfPreview } from '../components/PdfPreview';
+
+// Dynamic import to prevent SSR issues with react-pdf (requires browser APIs like DOMMatrix)
+const PdfPreview = dynamic(() => import('../components/PdfPreview').then(mod => ({ default: mod.PdfPreview })), {
+  ssr: false,
+  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>Loading PDF preview...</div>
+});
 
 interface PdfDocument {
   id: string;

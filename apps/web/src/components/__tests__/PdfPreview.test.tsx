@@ -51,24 +51,36 @@ jest.mock('react-pdf', () => {
 jest.mock('react-window', () => {
   const React = require('react');
 
-  const MockFixedSizeList = React.forwardRef(({ children, itemCount, itemSize, height, width }: any, ref: any) => (
-    <div
-      ref={ref}
-      data-testid="thumbnail-list"
-      data-item-count={itemCount}
-      data-item-size={itemSize}
-      data-height={height}
-      data-width={width}
-    >
-      {Array.from({ length: itemCount }).map((_, index) => (
-        <div key={index}>{children({ index, style: {} })}</div>
-      ))}
-    </div>
-  ));
-  MockFixedSizeList.displayName = 'MockFixedSizeList';
+  const MockList = React.forwardRef(({ rowComponent, rowCount, rowHeight, defaultHeight, listRef }: any, ref: any) => {
+    // Handle listRef callback
+    React.useEffect(() => {
+      if (listRef && typeof listRef === 'function') {
+        const api = { scrollToItem: jest.fn() };
+        listRef(api);
+      } else if (listRef && typeof listRef === 'object') {
+        listRef.current = { scrollToItem: jest.fn() };
+      }
+    }, [listRef]);
+
+    return (
+      <div
+        ref={ref}
+        data-testid="thumbnail-list"
+        data-item-count={rowCount}
+        data-item-size={rowHeight}
+        data-height={defaultHeight}
+      >
+        {Array.from({ length: rowCount }).map((_, index) => {
+          const RowComponent = rowComponent;
+          return <div key={index}><RowComponent index={index} style={{}} /></div>;
+        })}
+      </div>
+    );
+  });
+  MockList.displayName = 'MockList';
 
   return {
-    FixedSizeList: MockFixedSizeList
+    List: MockList
   };
 });
 

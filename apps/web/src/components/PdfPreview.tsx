@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FixedSizeList as List } from 'react-window';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { List } from 'react-window';
+// Note: CSS imports commented out due to module resolution issues in Next.js 15.5.4
+// import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+// import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 // Configure PDF.js worker
 if (typeof window !== 'undefined') {
@@ -33,7 +34,7 @@ export function PdfPreview({ file, onClose }: PdfPreviewProps) {
   const [showThumbnails, setShowThumbnails] = useState(true);
 
   const mainCanvasRef = useRef<HTMLDivElement>(null);
-  const thumbnailListRef = useRef<List>(null);
+  const thumbnailListRef = useRef<any>(null);
   const fileUrl = useMemo(() => URL.createObjectURL(file), [file]);
 
   // Detect mobile viewport
@@ -408,14 +409,13 @@ export function PdfPreview({ file, onClose }: PdfPreviewProps) {
             aria-label="Page thumbnails"
           >
             <List
-              ref={thumbnailListRef}
-              height={isMobile ? window.innerHeight - 120 : 600 - 60}
-              itemCount={numPages}
-              itemSize={THUMBNAIL_HEIGHT + 16}
-              width={THUMBNAIL_WIDTH + 32}
-            >
-              {renderThumbnail}
-            </List>
+              listRef={thumbnailListRef}
+              defaultHeight={isMobile ? window.innerHeight - 120 : 600 - 60}
+              rowCount={numPages}
+              rowHeight={THUMBNAIL_HEIGHT + 16}
+              rowComponent={({ index, style }) => renderThumbnail({ index, style })}
+              rowProps={{}}
+            />
           </div>
         )}
 
