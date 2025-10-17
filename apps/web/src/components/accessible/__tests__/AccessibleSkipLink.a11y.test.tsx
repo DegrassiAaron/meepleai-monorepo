@@ -9,6 +9,15 @@ import { axe } from 'jest-axe';
 import { AccessibleSkipLink } from '../AccessibleSkipLink';
 
 describe('AccessibleSkipLink - Accessibility', () => {
+  beforeEach(() => {
+    // Mock scrollIntoView (not implemented in jsdom)
+    Element.prototype.scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should have no accessibility violations', async () => {
     const { container } = render(
       <>
@@ -177,6 +186,9 @@ describe('AccessibleSkipLink - Accessibility', () => {
   });
 
   it('should warn in development if target not found', () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
     render(<AccessibleSkipLink href="#non-existent" />);
@@ -189,12 +201,11 @@ describe('AccessibleSkipLink - Accessibility', () => {
     );
 
     consoleSpy.mockRestore();
+    process.env.NODE_ENV = originalEnv;
   });
 
   it('should not scroll if target not found', () => {
-    // Mock scrollIntoView
-    const scrollIntoViewMock = jest.fn();
-    Element.prototype.scrollIntoView = scrollIntoViewMock;
+    const scrollIntoViewMock = Element.prototype.scrollIntoView as jest.Mock;
 
     render(<AccessibleSkipLink href="#non-existent" />);
 
@@ -206,9 +217,7 @@ describe('AccessibleSkipLink - Accessibility', () => {
   });
 
   it('should call scrollIntoView with smooth behavior', () => {
-    // Mock scrollIntoView
-    const scrollIntoViewMock = jest.fn();
-    Element.prototype.scrollIntoView = scrollIntoViewMock;
+    const scrollIntoViewMock = Element.prototype.scrollIntoView as jest.Mock;
 
     render(
       <>
