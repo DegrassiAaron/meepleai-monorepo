@@ -55,17 +55,21 @@ public class AuthEndpointsComprehensiveTests : IntegrationTestBase
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MeepleAiDbContext>();
 
+        // Load user in current scope to avoid EF tracking issues
+        var userInScope = await db.Users.FindAsync(user.Id);
+        Assert.NotNull(userInScope);
+
         var tokenHash = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("expired-token")));
         var expiredSession = new UserSessionEntity
         {
             Id = Guid.NewGuid().ToString(),
-            UserId = user.Id,
+            UserId = userInScope.Id,
             TokenHash = tokenHash,
             CreatedAt = DateTime.UtcNow.AddDays(-8), // 8 days ago
             ExpiresAt = DateTime.UtcNow.AddDays(-1), // expired yesterday
             IpAddress = "127.0.0.1",
             UserAgent = "TestAgent",
-            User = user
+            User = userInScope  // Use user from current scope
         };
         db.UserSessions.Add(expiredSession);
         await db.SaveChangesAsync();
