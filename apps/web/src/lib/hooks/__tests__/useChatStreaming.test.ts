@@ -904,7 +904,7 @@ describe('useChatStreaming', () => {
       const encoder = new TextEncoder();
       let abortSignal: AbortSignal | null = null;
 
-      mockFetch.mockImplementation((_url, options) => {
+      mockFetch.mockImplementation((_url, options: any) => {
         abortSignal = options?.signal as AbortSignal;
 
         return new Promise((resolve) => {
@@ -935,7 +935,7 @@ describe('useChatStreaming', () => {
         expect(abortSignal).not.toBeNull();
       });
 
-      expect(abortSignal?.aborted).toBe(false);
+      expect(abortSignal!.aborted).toBe(false);
 
       act(() => {
         controls.stopStreaming();
