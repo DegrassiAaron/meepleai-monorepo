@@ -173,7 +173,8 @@ export function PdfPreview({ file, onClose }: PdfPreviewProps) {
     goToPage(page);
   }, [goToPage]);
 
-  const renderThumbnail = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
+  const renderThumbnail = useCallback((props: { index: number; style: React.CSSProperties }) => {
+    const { index, style } = props;
     const pageNumber = index + 1;
     const isActive = pageNumber === currentPage;
 
@@ -408,13 +409,13 @@ export function PdfPreview({ file, onClose }: PdfPreviewProps) {
             role="navigation"
             aria-label="Page thumbnails"
           >
-            <List
+            <List<{}>
               listRef={thumbnailListRef}
               defaultHeight={isMobile ? window.innerHeight - 120 : 600 - 60}
               rowCount={numPages}
               rowHeight={THUMBNAIL_HEIGHT + 16}
-              rowComponent={({ index, style }) => renderThumbnail({ index, style })}
-              rowProps={{}}
+              rowComponent={renderThumbnail}
+              rowProps={{} as any}
             />
           </div>
         )}
