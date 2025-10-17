@@ -187,7 +187,12 @@ describe('AccessibleSkipLink - Accessibility', () => {
 
   it('should warn in development if target not found', () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    // Use Object.defineProperty to override read-only NODE_ENV
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: 'development',
+      writable: true,
+      configurable: true,
+    });
 
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
@@ -201,7 +206,13 @@ describe('AccessibleSkipLink - Accessibility', () => {
     );
 
     consoleSpy.mockRestore();
-    process.env.NODE_ENV = originalEnv;
+
+    // Restore original NODE_ENV
+    Object.defineProperty(process.env, 'NODE_ENV', {
+      value: originalEnv,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it('should not scroll if target not found', () => {
