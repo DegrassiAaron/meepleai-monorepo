@@ -269,8 +269,8 @@ return total";
                 .Select(s => new TopQuestion
                 {
                     QuestionHash = s.QuestionHash,
-                    HitCount = s.HitCount,
-                    MissCount = s.MissCount,
+                    HitCount = (long)s.HitCount,
+                    MissCount = (long)s.MissCount,
                     LastHitAt = s.LastHitAt
                 })
                 .ToList();
@@ -309,8 +309,8 @@ return total";
 
             return new CacheStats
             {
-                TotalHits = totalHits,
-                TotalMisses = totalMisses,
+                TotalHits = (long)totalHits,
+                TotalMisses = (long)totalMisses,
                 HitRate = hitRate,
                 TotalKeys = totalKeys,
                 CacheSizeBytes = cacheSize,
