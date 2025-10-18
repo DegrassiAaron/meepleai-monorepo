@@ -96,7 +96,12 @@ public class ChatExportService : IChatExportService
         safeName = Regex.Replace(safeName, @"[\x00-\x1F\x7F]", "");
 
         // Trim and limit length
-        safeName = safeName.Trim().Substring(0, Math.Min(safeName.Length, 50));
+        safeName = safeName.Trim();
+        if (string.IsNullOrWhiteSpace(safeName))
+        {
+            safeName = "chat"; // Fallback for empty/invalid game names
+        }
+        safeName = safeName.Substring(0, Math.Min(safeName.Length, 50));
 
         // Use short form of chatId (first 8 chars) for readability
         var shortChatId = chatId.ToString("N").Substring(0, 8);

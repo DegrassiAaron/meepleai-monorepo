@@ -71,6 +71,13 @@ export function ExportChatModal({
 
   const handleExport = async () => {
     setError(null);
+
+    // Validate date range
+    if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
+      setError('La data iniziale deve essere precedente alla data finale.');
+      return;
+    }
+
     setIsExporting(true);
 
     try {
