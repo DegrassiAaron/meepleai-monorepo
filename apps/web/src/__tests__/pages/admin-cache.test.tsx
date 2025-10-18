@@ -17,6 +17,15 @@ describe('CacheDashboard', () => {
   let fetchMock: FetchMock;
   const apiBase = 'https://api.example.com';
 
+  /**
+   * Reloads the CacheDashboard module with fresh environment variables.
+   *
+   * RATIONALE: Next.js reads NEXT_PUBLIC_API_BASE at module import time.
+   * Changing process.env after import doesn't affect already-loaded modules.
+   * We must clear the require cache and reload the module to pick up new values.
+   *
+   * This is a test-only workaround for Next.js environment variable handling.
+   */
   const loadCacheDashboard = () => {
     const cachePath = require.resolve('../../pages/admin/cache');
     const apiCacheKeys = Object.keys(require.cache).filter((key) => key.includes('lib/api'));

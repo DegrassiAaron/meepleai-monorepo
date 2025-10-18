@@ -140,19 +140,25 @@ export function runAllPendingTimers(): void {
 }
 
 /**
- * Type definition for timer setup options.
+ * Configuration options for setupFakeTimers lifecycle management.
+ *
  * Future: Could extend this to support custom timer configurations.
+ * Currently defined for documentation purposes - implementation planned for future enhancement.
  */
 export interface TimerSetupOptions {
   /**
-   * Whether to run pending timers in afterEach.
-   * Default: true (recommended to prevent timer leaks)
+   * Whether to run pending timers in afterEach cleanup.
+   *
+   * @default true
+   * @remarks Recommended to prevent timer leaks into subsequent tests
    */
   runPendingAfterEach?: boolean;
 
   /**
-   * Whether to restore real timers in afterEach.
-   * Default: true (recommended to prevent interference)
+   * Whether to restore real timers in afterEach cleanup.
+   *
+   * @default true
+   * @remarks Recommended to prevent interference with other tests
    */
   restoreRealTimersAfterEach?: boolean;
 }
