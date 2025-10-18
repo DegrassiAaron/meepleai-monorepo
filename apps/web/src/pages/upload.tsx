@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   type ChangeEvent,
   type FormEvent,
@@ -11,6 +12,13 @@ import { categorizeError, type CategorizedError, extractCorrelationId } from '..
 import { retryWithBackoff, isRetryableError } from '../lib/retryUtils';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 import { ProcessingProgress } from '../components/ProcessingProgress';
+import { MultiFileUpload } from '../components/MultiFileUpload';
+
+// Dynamic import to prevent SSR issues with react-pdf (requires browser APIs like DOMMatrix)
+const PdfPreview = dynamic(() => import('../components/PdfPreview').then(mod => ({ default: mod.PdfPreview })), {
+  ssr: false,
+  loading: () => <div style={{ padding: '20px', textAlign: 'center' }}>Loading PDF preview...</div>
+});
 
 interface PdfDocument {
   id: string;
@@ -983,9 +991,18 @@ export default function UploadPage() {
                   )}
                 </div>
 
+                {/* PDF Preview */}
+                {file && Object.keys(validationErrors).length === 0 && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <h3 style={{ marginBottom: '12px', fontSize: '16px', fontWeight: 600 }}>Preview</h3>
+                    <PdfPreview file={file} />
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={uploading || !file || !confirmedGameId}
+                  data-testid="upload-button"
                   style={{
                     padding: '12px 24px',
                     backgroundColor: uploading || !file || !confirmedGameId ? '#ccc' : '#0070f3',
@@ -1005,6 +1022,21 @@ export default function UploadPage() {
                   </p>
                 )}
               </form>
+
+              {/* PDF-05: Multi-File Upload Section */}
+              {confirmedGameId && confirmedGame && (
+                <div style={{ marginTop: '32px', marginBottom: '32px' }}>
+                  <MultiFileUpload
+                    gameId={confirmedGameId}
+                    gameName={confirmedGame.name}
+                    onUploadComplete={() => {
+                      if (confirmedGameId) {
+                        void loadPdfs(confirmedGameId);
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
               <div
                 style={{
