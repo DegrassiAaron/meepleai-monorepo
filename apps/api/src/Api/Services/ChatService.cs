@@ -117,10 +117,17 @@ public class ChatService
             throw new InvalidOperationException($"Chat with ID '{chatId}' not found or access denied");
         }
 
+        // CHAT-06: Calculate next sequence number for cascade invalidation
+        var maxSequence = await _db.ChatLogs
+            .Where(cl => cl.ChatId == chatId)
+            .MaxAsync(cl => (int?)cl.SequenceNumber, ct) ?? 0;
+
         var chatLog = new ChatLogEntity
         {
             Id = Guid.NewGuid(),
             ChatId = chatId,
+            UserId = level == "user" ? userId : null, // CHAT-06: Only user messages have UserId
+            SequenceNumber = maxSequence + 1, // CHAT-06: Auto-increment sequence
             Level = level,
             Message = message,
             MetadataJson = metadata != null ? JsonSerializer.Serialize(metadata) : null,
