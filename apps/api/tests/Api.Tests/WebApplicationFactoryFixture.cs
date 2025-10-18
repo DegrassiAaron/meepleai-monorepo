@@ -301,17 +301,18 @@ public class WebApplicationFactoryFixture : WebApplicationFactory<Program>
 
                     try
                     {
-                        // Ensure the database schema is created
-                        db.Database.EnsureCreated();
+                        // Apply all migrations to ensure schema is up-to-date
+                        // Using Migrate() instead of EnsureCreated() ensures CHAT-06 columns (deleted_at, etc.) are added
+                        db.Database.Migrate();
 
                         // Verify critical tables exist
                         var canConnect = db.Database.CanConnect();
                         if (!canConnect)
                         {
-                            throw new InvalidOperationException("Cannot connect to SQLite database after EnsureCreated()");
+                            throw new InvalidOperationException("Cannot connect to SQLite database after Migrate()");
                         }
 
-                        // Seed demo data (since EnsureCreated doesn't run migrations)
+                        // Seed demo data (migrations don't seed data)
                         SeedDemoData(db);
 
                         _databaseInitialized = true;

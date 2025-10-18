@@ -43,7 +43,8 @@ jest.mock('../../lib/api', () => ({
     post: jest.fn(),
     put: jest.fn(),
     delete: jest.fn(),
-    chatMessages: {
+    chat: {
+      exportChat: jest.fn(),
       updateMessage: jest.fn(),
       deleteMessage: jest.fn()
     }
