@@ -9,7 +9,8 @@ const createJsonResponse = (data: unknown, ok = true, status = 200) =>
   ({
     ok,
     status,
-    json: async () => data
+    json: async () => data,
+    headers: new Headers()
   } as unknown as Response);
 
 describe('CacheDashboard', () => {
