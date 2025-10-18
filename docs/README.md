@@ -15,6 +15,7 @@ This directory contains technical documentation for the MeepleAI monorepo, organ
 
 ### Getting Started
 - **[Getting Started Guide](./guide/getting-started.md)** - Step-by-step guide for local setup and testing
+- **[Documentation Workflow](./guide/documentation-workflow.md)** - Complete guide for working with documentation (search, write, maintain)
 - **[AI Agents Guide](./guide/agents-guide.md)** - Guide for AI coding assistants (conventions, workflow, prompts)
 - **[Testing Guide](./guide/testing-guide.md)** - BDD-style test naming conventions and best practices
 
@@ -136,6 +137,7 @@ Vedi [tools/README.md](../tools/README.md) per la documentazione completa.
 
 ### For Developers
 - **Getting Started**: See [Getting Started Guide](./guide/getting-started.md) for local setup
+- **Documentation Workflow**: See [Documentation Workflow Guide](./guide/documentation-workflow.md) for complete docs guide
 - **Architecture**: See [../CLAUDE.md](../CLAUDE.md) for complete development guide
 - **Running Tests**: `dotnet test` (API) or `pnpm test` (Web)
 - **Measuring Coverage**: `pwsh tools/measure-coverage.ps1`
