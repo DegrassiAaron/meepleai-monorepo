@@ -96,6 +96,28 @@ global.IntersectionObserver = class IntersectionObserver {
   }
 };
 
+// Mock window.matchMedia for responsive behavior tests (issue #463)
+// Used by useReducedMotion hook in components like SkeletonLoader
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false, // Default: no media query matches (e.g., no reduced motion preference)
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // Deprecated, but included for compatibility
+    removeListener: jest.fn(), // Deprecated, but included for compatibility
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+// Mock Element.scrollIntoView for chat auto-scroll feature (issue #463)
+// Used by ChatPage to scroll to latest message
+if (typeof Element.prototype.scrollIntoView === 'undefined') {
+  Element.prototype.scrollIntoView = jest.fn();
+}
+
 // Mock ReadableStream for SSE streaming tests
 if (typeof global.ReadableStream === 'undefined') {
   global.ReadableStream = class ReadableStream {
