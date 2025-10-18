@@ -301,9 +301,10 @@ public class WebApplicationFactoryFixture : WebApplicationFactory<Program>
 
                     try
                     {
-                        // Apply all migrations to ensure schema is up-to-date
-                        // Using Migrate() instead of EnsureCreated() ensures CHAT-06 columns (deleted_at, etc.) are added
-                        db.Database.Migrate();
+                        // Use EnsureDeleted + EnsureCreated for clean SQLite test databases
+                        // This avoids migration conflicts between Postgres and SQLite
+                        db.Database.EnsureDeleted();
+                        db.Database.EnsureCreated();
 
                         // Verify critical tables exist
                         var canConnect = db.Database.CanConnect();
