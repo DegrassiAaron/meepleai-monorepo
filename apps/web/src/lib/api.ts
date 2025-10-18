@@ -68,6 +68,23 @@ export interface CacheStats {
   topQuestions: TopQuestion[];
 }
 
+// CHAT-06: Chat message response type
+export interface ChatMessageResponse {
+  id: string;
+  chatId: string;
+  userId: string | null;
+  level: string;
+  content: string;
+  sequenceNumber: number;
+  createdAt: string;
+  updatedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
+  deletedByUserId: string | null;
+  isInvalidated: boolean;
+  metadataJson: string | null;
+}
+
 // Enhanced error class with correlation ID (PDF-06)
 export class ApiError extends Error {
   constructor(
@@ -236,6 +253,24 @@ export const api = {
 
     async cancelProcessing(pdfId: string): Promise<void> {
       return api.delete(`/api/v1/pdfs/${encodeURIComponent(pdfId)}/processing`);
+    }
+  },
+
+  // CHAT-06: Chat message management API
+  chatMessages: {
+    async updateMessage(
+      chatId: string,
+      messageId: string,
+      content: string
+    ): Promise<ChatMessageResponse> {
+      return api.put<ChatMessageResponse>(
+        `/api/v1/chats/${chatId}/messages/${messageId}`,
+        { content }
+      );
+    },
+
+    async deleteMessage(chatId: string, messageId: string): Promise<void> {
+      return api.delete(`/api/v1/chats/${chatId}/messages/${messageId}`);
     }
   }
 };
