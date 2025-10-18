@@ -61,13 +61,19 @@ export function TypingIndicator({
         initial: { y: 0 },
         animate: {
           y: [-2, 0, -2],
-          transition: {
-            duration: 0.6,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
         },
       };
+
+  // Transition configuration for dots
+  const getDotTransition = (delay: number) =>
+    shouldReduceMotion
+      ? { duration: 0 }
+      : {
+          duration: 0.6,
+          repeat: Infinity,
+          ease: 'easeInOut' as const,
+          delay,
+        };
 
   // Stagger delays for each dot
   const staggerDelays = [0, 0.1, 0.2];
@@ -97,9 +103,7 @@ export function TypingIndicator({
                 variants={dotVariants}
                 initial="initial"
                 animate="animate"
-                transition={{
-                  delay,
-                }}
+                transition={getDotTransition(delay)}
                 className="w-2 h-2 bg-slate-500 dark:bg-slate-400 rounded-full"
               />
             ))}

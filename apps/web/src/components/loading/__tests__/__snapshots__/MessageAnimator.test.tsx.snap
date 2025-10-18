@@ -6,6 +6,7 @@ exports[`MessageAnimator Snapshot tests should match snapshot for left direction
   data-animation-complete="false"
   data-message-id="msg-13"
   initial="initial"
+  transition="[object Object]"
   variants="[object Object]"
 >
   <div>
@@ -20,6 +21,7 @@ exports[`MessageAnimator Snapshot tests should match snapshot for right directio
   data-animation-complete="false"
   data-message-id="msg-14"
   initial="initial"
+  transition="[object Object]"
   variants="[object Object]"
 >
   <div>

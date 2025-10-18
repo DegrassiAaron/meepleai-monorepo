@@ -78,13 +78,17 @@ export function MessageAnimator({
         animate: {
           opacity: 1,
           x: 0,
-          transition: {
-            type: 'spring',
-            stiffness: 500,
-            damping: 30,
-            delay,
-          },
         },
+      };
+
+  // Transition configuration
+  const transition = shouldReduceMotion
+    ? { duration: 0 }
+    : {
+        type: 'spring' as const,
+        stiffness: 500,
+        damping: 30,
+        delay,
       };
 
   // Set animation complete after delay + animation duration
@@ -107,6 +111,7 @@ export function MessageAnimator({
       variants={variants}
       initial="initial"
       animate="animate"
+      transition={transition}
       data-message-id={id}
       data-animation-complete={animationComplete.toString()}
     >

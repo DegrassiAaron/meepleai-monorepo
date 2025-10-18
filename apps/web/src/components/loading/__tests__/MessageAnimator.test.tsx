@@ -120,7 +120,7 @@ describe('MessageAnimator', () => {
         </MessageAnimator>
       );
       const lastCall = mockMotionDiv.mock.calls[mockMotionDiv.mock.calls.length - 1][0];
-      expect(lastCall.variants.animate.transition.delay).toBe(0.5);
+      expect(lastCall.transition.delay).toBe(0.5);
     });
 
     it('should default to 0 delay when not provided', () => {
@@ -130,7 +130,7 @@ describe('MessageAnimator', () => {
         </MessageAnimator>
       );
       const lastCall = mockMotionDiv.mock.calls[mockMotionDiv.mock.calls.length - 1][0];
-      expect(lastCall.variants.animate.transition.delay).toBe(0);
+      expect(lastCall.transition.delay).toBe(0);
     });
   });
 
