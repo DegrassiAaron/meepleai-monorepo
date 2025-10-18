@@ -8,7 +8,7 @@ public class ChatLogEntity
     /// <summary>
     /// User who created the message. NULL for AI-generated messages.
     /// </summary>
-    public Guid? UserId { get; set; }
+    public string? UserId { get; set; }
 
     public string Level { get; set; } = default!;
     public string Message { get; set; } = default!;
@@ -39,7 +39,7 @@ public class ChatLogEntity
     /// <summary>
     /// User who deleted the message (may differ from creator for admin deletions).
     /// </summary>
-    public Guid? DeletedByUserId { get; set; }
+    public string? DeletedByUserId { get; set; }
 
     /// <summary>
     /// Flag indicating message is invalidated due to prior message edit/delete.

@@ -21,11 +21,12 @@ namespace Api.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Step 1: Add new columns (all nullable initially for safe backfill)
-            migrationBuilder.AddColumn<Guid?>(
+            migrationBuilder.AddColumn<string>(
                 name: "user_id",
                 table: "chat_logs",
-                type: "uuid",
-                nullable: true);
+                type: "text",
+                nullable: true,
+                maxLength: 64);
 
             migrationBuilder.AddColumn<DateTime?>(
                 name: "updated_at",
@@ -46,11 +47,12 @@ namespace Api.Migrations
                 type: "timestamp with time zone",
                 nullable: true);
 
-            migrationBuilder.AddColumn<Guid?>(
+            migrationBuilder.AddColumn<string>(
                 name: "deleted_by_user_id",
                 table: "chat_logs",
-                type: "uuid",
-                nullable: true);
+                type: "text",
+                nullable: true,
+                maxLength: 64);
 
             migrationBuilder.AddColumn<bool>(
                 name: "is_invalidated",
