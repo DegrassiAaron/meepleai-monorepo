@@ -362,7 +362,7 @@ export default function SetupPage() {
   if (!authUser) {
     return (
       <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", fontFamily: "sans-serif" }}>
-        <Link href="/" style={{ color: "#0070f3", textDecoration: "none" }}>
+        <Link href="/" style={{ color: "#1a73e8", textDecoration: "none" }}>
           ← Back to Home
         </Link>
         <div
@@ -382,7 +382,7 @@ export default function SetupPage() {
               display: "inline-block",
               marginTop: 16,
               padding: "8px 16px",
-              background: "#0070f3",
+              background: "#1a73e8",
               color: "white",
               textDecoration: "none",
               borderRadius: 4

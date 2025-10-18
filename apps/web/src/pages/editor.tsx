@@ -221,7 +221,7 @@ export default function RuleSpecEditor() {
       <main style={{ padding: 24, fontFamily: "sans-serif" }}>
         <h1>Editor RuleSpec</h1>
         <p>Devi effettuare l&apos;accesso per utilizzare l&apos;editor.</p>
-        <Link href="/" style={{ color: "#0070f3" }}>
+        <Link href="/" style={{ color: "#1a73e8" }}>
           Torna alla home
         </Link>
       </main>
@@ -233,7 +233,7 @@ export default function RuleSpecEditor() {
       <main style={{ padding: 24, fontFamily: "sans-serif" }}>
         <h1>Editor RuleSpec</h1>
         <p>Non hai i permessi necessari per utilizzare l&apos;editor.</p>
-        <Link href="/" style={{ color: "#0070f3" }}>
+        <Link href="/" style={{ color: "#1a73e8" }}>
           Torna alla home
         </Link>
       </main>
@@ -245,7 +245,7 @@ export default function RuleSpecEditor() {
       <main style={{ padding: 24, fontFamily: "sans-serif" }}>
         <h1>Editor RuleSpec</h1>
         <p>Specifica un gameId nella query string: ?gameId=demo-chess</p>
-        <Link href="/" style={{ color: "#0070f3" }}>
+        <Link href="/" style={{ color: "#1a73e8" }}>
           Torna alla home
         </Link>
       </main>
@@ -316,7 +316,7 @@ export default function RuleSpecEditor() {
                   disabled={!canUndo}
                   style={{
                     padding: "6px 12px",
-                    background: canUndo ? "#0070f3" : "#ccc",
+                    background: canUndo ? "#1a73e8" : "#ccc",
                     color: "white",
                     border: "none",
                     borderRadius: 4,
@@ -332,7 +332,7 @@ export default function RuleSpecEditor() {
                   disabled={!canRedo}
                   style={{
                     padding: "6px 12px",
-                    background: canRedo ? "#0070f3" : "#ccc",
+                    background: canRedo ? "#1a73e8" : "#ccc",
                     color: "white",
                     border: "none",
                     borderRadius: 4,
@@ -462,7 +462,7 @@ function RuleSpecPreview({ ruleSpec }: { ruleSpec: RuleSpec }) {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <strong style={{ color: "#0070f3" }}>
+              <strong style={{ color: "#1a73e8" }}>
                 {index + 1}. {rule.id}
               </strong>
               <div style={{ fontSize: 12, color: "#666" }}>

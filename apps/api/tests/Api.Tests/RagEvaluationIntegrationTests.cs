@@ -57,7 +57,8 @@ public class RagEvaluationIntegrationTests : IAsyncLifetime
             .Options;
 
         _dbContext = new MeepleAiDbContext(options);
-        await _dbContext.Database.MigrateAsync();
+        // Use EnsureCreated instead of MigrateAsync to avoid migration snapshot issues
+        await _dbContext.Database.EnsureCreatedAsync();
 
         // Seed test data
         await SeedTestDataAsync();

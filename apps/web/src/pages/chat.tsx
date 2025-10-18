@@ -536,7 +536,7 @@ export default function ChatPage() {
   if (!authUser) {
     return (
       <main id="main-content" style={{ padding: 24, maxWidth: 900, margin: "0 auto", fontFamily: "sans-serif" }}>
-        <Link href="/" style={{ color: "#0070f3", textDecoration: "none" }}>
+        <Link href="/" style={{ color: "#1a73e8", textDecoration: "none" }}>
           ← Torna alla Home
         </Link>
         <div
@@ -556,7 +556,7 @@ export default function ChatPage() {
               display: "inline-block",
               marginTop: 16,
               padding: "8px 16px",
-              background: "#0070f3",
+              background: "#1a73e8",
               color: "white",
               textDecoration: "none",
               borderRadius: 4
@@ -1119,7 +1119,7 @@ export default function ChatPage() {
               background:
                 isSendingMessage || streamingState.isStreaming || !inputValue.trim() || !selectedGameId || !selectedAgentId
                   ? "#dadce0"
-                  : "#0070f3",
+                  : "#1a73e8",
               color: "white",
               border: "none",
               borderRadius: 4,

@@ -209,7 +209,7 @@ export default function VersionHistory() {
       <main style={{ padding: 24, fontFamily: "sans-serif" }}>
         <h1>Storico Versioni RuleSpec</h1>
         <p>Devi effettuare l&apos;accesso per visualizzare lo storico.</p>
-        <Link href="/" style={{ color: "#0070f3" }}>
+        <Link href="/" style={{ color: "#1a73e8" }}>
           Torna alla home
         </Link>
       </main>
@@ -221,7 +221,7 @@ export default function VersionHistory() {
       <main style={{ padding: 24, fontFamily: "sans-serif" }}>
         <h1>Storico Versioni RuleSpec</h1>
         <p>Specifica un gameId nella query string: ?gameId=demo-chess</p>
-        <Link href="/" style={{ color: "#0070f3" }}>
+        <Link href="/" style={{ color: "#1a73e8" }}>
           Torna alla home
         </Link>
       </main>
@@ -242,7 +242,7 @@ export default function VersionHistory() {
             href={`/editor?gameId=${gameId}`}
             style={{
               padding: "8px 16px",
-              background: "#0070f3",
+              background: "#1a73e8",
               color: "white",
               textDecoration: "none",
               borderRadius: 4,

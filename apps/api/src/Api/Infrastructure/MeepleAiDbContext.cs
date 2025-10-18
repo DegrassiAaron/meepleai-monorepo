@@ -463,5 +463,21 @@ public class MeepleAiDbContext : DbContext
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.ExpiresAt);
         });
+
+        // PERF-03: Cache statistics for AI response caching
+        modelBuilder.Entity<CacheStatEntity>(entity =>
+        {
+            entity.ToTable("cache_stats");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.GameId).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.QuestionHash).IsRequired().HasMaxLength(64);
+            entity.Property(e => e.HitCount).IsRequired();
+            entity.Property(e => e.MissCount).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.LastHitAt).IsRequired();
+            entity.HasIndex(e => new { e.GameId, e.QuestionHash }).IsUnique();
+            entity.HasIndex(e => e.HitCount);
+            entity.HasIndex(e => e.LastHitAt);
+        });
     }
 }

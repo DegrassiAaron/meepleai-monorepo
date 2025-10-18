@@ -242,7 +242,7 @@ export default function ChessPage() {
               display: "inline-block",
               marginTop: 16,
               padding: "8px 16px",
-              background: "#0070f3",
+              background: "#1a73e8",
               color: "white",
               textDecoration: "none",
               borderRadius: 4
