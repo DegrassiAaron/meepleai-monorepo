@@ -18,18 +18,6 @@ describe('CacheDashboard', () => {
   let fetchMock: FetchMock;
   const apiBase = 'https://api.example.com';
 
-  const loadCacheDashboard = () => {
-    const cachePath = require.resolve('../../pages/admin/cache');
-    const apiCacheKeys = Object.keys(require.cache).filter((key) => key.includes('lib/api'));
-
-    delete require.cache[cachePath];
-    apiCacheKeys.forEach((key) => {
-      delete require.cache[key];
-    });
-
-    return require('../../pages/admin/cache').default;
-  };
-
   beforeAll(() => {
     fetchMock = jest.fn() as FetchMock;
     global.fetch = fetchMock;
@@ -84,8 +72,6 @@ describe('CacheDashboard', () => {
   it('renders loading state while data is being fetched', () => {
     fetchMock.mockImplementation(() => new Promise(() => {}));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
@@ -97,22 +83,20 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
     // Wait for data to load
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
-        `${apiBase}/api/v1/games`,
+        `${API_BASE_FALLBACK}/api/v1/games`,
         expect.objectContaining({ credentials: 'include' })
       )
     );
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
-        `${apiBase}/api/v1/admin/cache/stats`,
+        `${API_BASE_FALLBACK}/api/v1/admin/cache/stats`,
         expect.objectContaining({ credentials: 'include' })
       )
     );
@@ -157,8 +141,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(highHitRate));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     const { rerender, unmount } = render(<CacheDashboard />);
 
@@ -211,8 +193,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(gameSpecificStats));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -225,7 +205,7 @@ describe('CacheDashboard', () => {
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
-        `${apiBase}/api/v1/admin/cache/stats?gameId=game-1`,
+        `${API_BASE_FALLBACK}/api/v1/admin/cache/stats?gameId=game-1`,
         expect.objectContaining({ credentials: 'include' })
       )
     );
@@ -243,8 +223,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse)); // Refresh after invalidation
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -271,7 +249,7 @@ describe('CacheDashboard', () => {
     // Check DELETE request was made
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
-        `${apiBase}/api/v1/admin/cache/games/game-1`,
+        `${API_BASE_FALLBACK}/api/v1/admin/cache/games/game-1`,
         expect.objectContaining({
           method: 'DELETE',
           credentials: 'include'
@@ -301,8 +279,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse)); // Refresh after invalidation
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -329,7 +305,7 @@ describe('CacheDashboard', () => {
     // Check DELETE request was made
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
-        `${apiBase}/api/v1/admin/cache/tags/qa`,
+        `${API_BASE_FALLBACK}/api/v1/admin/cache/tags/qa`,
         expect.objectContaining({
           method: 'DELETE',
           credentials: 'include'
@@ -351,8 +327,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -376,8 +350,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -409,8 +381,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse))
       .mockResolvedValueOnce(createJsonResponse({ error: 'Unauthorized' }, false, 401));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -440,8 +410,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -473,8 +441,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(emptyStats));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
@@ -489,8 +455,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(null, false, 401));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
@@ -508,8 +472,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -542,8 +504,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -577,8 +537,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(smallCache));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     const { rerender, unmount } = render(<CacheDashboard />);
 
@@ -620,7 +578,6 @@ describe('CacheDashboard', () => {
       )
     );
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
   });
 
   it('handles Enter key press for tag invalidation', async () => {
@@ -628,8 +585,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
@@ -652,8 +607,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
@@ -673,8 +626,6 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
