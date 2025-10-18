@@ -1,8 +1,11 @@
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api } from "../lib/api";
 import { useChatStreaming } from "../lib/hooks/useChatStreaming";
 import { FollowUpQuestions } from "../components/FollowUpQuestions";
+import { SkeletonLoader, TypingIndicator, MessageAnimator, LoadingButton } from "@/components/loading";
+import { AnimatePresence } from "framer-motion";
+import { ExportChatModal } from "@/components/ExportChatModal";
 
 // Type definitions
 type AuthUser = {
@@ -168,6 +171,7 @@ export default function ChatPage() {
   const [inputValue, setInputValue] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Loading states
   const [isLoadingGames, setIsLoadingGames] = useState(false);
@@ -183,6 +187,9 @@ export default function ChatPage() {
   const [deleteConfirmMessageId, setDeleteConfirmMessageId] = useState<string | null>(null);
   const [isUpdatingMessage, setIsUpdatingMessage] = useState(false);
   const [isDeletingMessage, setIsDeletingMessage] = useState(false);
+
+  // CHAT-04: Refs for smooth scrolling
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Streaming hook
   const [streamingState, streamingControls] = useChatStreaming({
@@ -260,6 +267,13 @@ export default function ChatPage() {
       cancelEdit();
     }
   }, [activeChatId]);
+
+  // CHAT-04: Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (messages.length > 0 && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [messages]);
 
   const loadCurrentUser = async () => {
     try {
@@ -579,7 +593,7 @@ export default function ChatPage() {
     setErrorMessage("");
 
     try {
-      await api.chatMessages.updateMessage(chatId, messageId, editContent.trim());
+      await api.chat.updateMessage(chatId, messageId, editContent.trim());
 
       // Reload chat history to get updated messages and invalidation states
       await loadChatHistory(chatId);
@@ -621,7 +635,7 @@ export default function ChatPage() {
     setErrorMessage("");
 
     try {
-      await api.chatMessages.deleteMessage(chatId, messageId);
+      await api.chat.deleteMessage(chatId, messageId);
 
       // Reload chat history to get updated messages and invalidation states
       await loadChatHistory(chatId);
@@ -656,6 +670,9 @@ export default function ChatPage() {
       inputElement.focus();
     }
   };
+
+  // Get selected agent for display name
+  const selectedAgent = agents.find(a => a.id === selectedAgentId);
 
   // Render login required state
   if (!authUser) {
@@ -751,27 +768,33 @@ export default function ChatPage() {
             >
               Cambia Gioco:
             </label>
-            <select
-              id="gameSelect"
-              value={selectedGameId ?? ""}
-              onChange={(e) => setSelectedGameId(e.target.value || null)}
-              disabled={isLoadingGames}
-              style={{
-                width: "100%",
-                padding: 8,
-                fontSize: 13,
-                border: "1px solid #dadce0",
-                borderRadius: 4,
-                background: "white"
-              }}
-            >
-              <option value="">Seleziona un gioco...</option>
-              {games.map((game) => (
-                <option key={game.id} value={game.id}>
-                  {game.name}
-                </option>
-              ))}
-            </select>
+            {isLoadingGames ? (
+              <div style={{ width: "100%" }}>
+                <SkeletonLoader variant="agents" count={1} ariaLabel="Caricamento giochi" />
+              </div>
+            ) : (
+              <select
+                id="gameSelect"
+                value={selectedGameId ?? ""}
+                onChange={(e) => setSelectedGameId(e.target.value || null)}
+                disabled={isLoadingGames}
+                style={{
+                  width: "100%",
+                  padding: 8,
+                  fontSize: 13,
+                  border: "1px solid #dadce0",
+                  borderRadius: 4,
+                  background: "white"
+                }}
+              >
+                <option value="">Seleziona un gioco...</option>
+                {games.map((game) => (
+                  <option key={game.id} value={game.id}>
+                    {game.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Agent Selector */}
@@ -782,33 +805,42 @@ export default function ChatPage() {
             >
               Agente:
             </label>
-            <select
-              id="agentSelect"
-              value={selectedAgentId ?? ""}
-              onChange={(e) => setSelectedAgentId(e.target.value || null)}
-              disabled={isLoadingAgents || !selectedGameId}
-              style={{
-                width: "100%",
-                padding: 8,
-                fontSize: 13,
-                border: "1px solid #dadce0",
-                borderRadius: 4,
-                background: "white"
-              }}
-            >
-              <option value="">Seleziona un agente...</option>
-              {agents.map((agent) => (
-                <option key={agent.id} value={agent.id}>
-                  {agent.name}
-                </option>
-              ))}
-            </select>
+            {isLoadingAgents ? (
+              <div style={{ width: "100%" }}>
+                <SkeletonLoader variant="agents" count={1} ariaLabel="Caricamento agenti" />
+              </div>
+            ) : (
+              <select
+                id="agentSelect"
+                value={selectedAgentId ?? ""}
+                onChange={(e) => setSelectedAgentId(e.target.value || null)}
+                disabled={isLoadingAgents || !selectedGameId}
+                style={{
+                  width: "100%",
+                  padding: 8,
+                  fontSize: 13,
+                  border: "1px solid #dadce0",
+                  borderRadius: 4,
+                  background: "white"
+                }}
+              >
+                <option value="">Seleziona un agente...</option>
+                {agents.map((agent) => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* New Chat Button */}
-          <button
+          <LoadingButton
+            isLoading={isCreatingChat}
+            loadingText="Creazione..."
             onClick={() => void createNewChat()}
-            disabled={!selectedGameId || !selectedAgentId || isCreatingChat}
+            disabled={!selectedGameId || !selectedAgentId}
+            spinnerSize="sm"
             aria-label="Create new chat"
             style={{
               width: "100%",
@@ -822,16 +854,14 @@ export default function ChatPage() {
               cursor: !selectedGameId || !selectedAgentId || isCreatingChat ? "not-allowed" : "pointer"
             }}
           >
-            {isCreatingChat ? "Creazione..." : "+ Nuova Chat"}
-          </button>
+            + Nuova Chat
+          </LoadingButton>
         </div>
 
         {/* Chat List */}
         <nav aria-label="Chat history" style={{ flex: 1, overflowY: "auto", padding: 8 }}>
           {isLoadingChats ? (
-            <div role="status" aria-live="polite" style={{ padding: 16, textAlign: "center", color: "#64748b", fontSize: 13 }}>
-              Caricamento chat...
-            </div>
+            <SkeletonLoader variant="chatHistory" count={5} ariaLabel="Caricamento cronologia chat" />
           ) : chats.length === 0 ? (
             <div style={{ padding: 16, textAlign: "center", color: "#64748b", fontSize: 13 }}>
               Nessuna chat. Creane una nuova!
@@ -936,19 +966,59 @@ export default function ChatPage() {
               </p>
             </div>
           </div>
-          <Link
-            href="/"
-            style={{
-              padding: "8px 16px",
-              background: "#1a73e8",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: 4,
-              fontSize: 14
-            }}
-          >
-            Home
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* CHAT-05: Export button */}
+            {activeChatId && (
+              <button
+                onClick={() => setShowExportModal(true)}
+                aria-label="Export chat"
+                style={{
+                  padding: "8px 16px",
+                  background: "#34a853",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 4,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6
+                }}
+                title="Esporta questa chat"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Esporta
+              </button>
+            )}
+            <Link
+              href="/"
+              style={{
+                padding: "8px 16px",
+                background: "#1a73e8",
+                color: "white",
+                textDecoration: "none",
+                borderRadius: 4,
+                fontSize: 14
+              }}
+            >
+              Home
+            </Link>
+          </div>
         </div>
 
         {/* Error Message */}
@@ -981,9 +1051,7 @@ export default function ChatPage() {
           }}
         >
           {isLoadingMessages ? (
-            <div role="status" aria-live="polite" style={{ textAlign: "center", padding: 48, color: "#64748b" }}>
-              <p style={{ fontSize: 16 }}>Caricamento messaggi...</p>
-            </div>
+            <SkeletonLoader variant="message" count={3} ariaLabel="Caricamento messaggi" />
           ) : messages.length === 0 ? (
             <div style={{ textAlign: "center", padding: 48, color: "#64748b" }}>
               <p style={{ fontSize: 16, marginBottom: 8 }}>Nessun messaggio ancora.</p>
@@ -995,268 +1063,286 @@ export default function ChatPage() {
             </div>
           ) : (
             <ul role="log" aria-live="polite" aria-atomic="false" style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {messages.map((msg) => {
-                // CHAT-06: Extract backend message ID (strip "backend-" prefix)
-                const backendMsgId = msg.backendMessageId?.replace('backend-', '') ?? msg.backendMessageId;
-                const isEditing = editingMessageId === msg.id;
-                const canEdit = msg.role === "user" && !msg.isDeleted && !!backendMsgId;
+              <AnimatePresence mode="popLayout">
+                {messages.map((msg, index) => {
+                  // CHAT-06: Extract backend message ID (strip "backend-" prefix)
+                  const backendMsgId = msg.backendMessageId?.replace('backend-', '') ?? msg.backendMessageId;
+                  const isEditing = editingMessageId === msg.id;
+                  const canEdit = msg.role === "user" && !msg.isDeleted && !!backendMsgId;
 
-                return (
-                  <li
-                    key={msg.id}
-                    aria-label={`${msg.role === "user" ? "Your message" : "AI response"}`}
-                    style={{
-                      marginBottom: 24,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: msg.role === "user" ? "flex-end" : "flex-start"
-                    }}
-                  >
-                    {/* CHAT-06: Invalidation Warning (for assistant messages) */}
-                    {msg.role === "assistant" && msg.isInvalidated && (
-                      <div
-                        style={{
-                          maxWidth: "75%",
-                          padding: 8,
-                          marginBottom: 8,
-                          background: "#fef3c7",
-                          border: "1px solid #f59e0b",
-                          borderRadius: 4,
-                          fontSize: 12,
-                          color: "#92400e",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6
-                        }}
-                        role="alert"
-                      >
-                        <span style={{ fontSize: 14 }}>⚠️</span>
-                        <span>Questa risposta potrebbe essere obsoleta a causa di una modifica o eliminazione di un messaggio precedente.</span>
-                      </div>
-                    )}
-
-                    {/* Message Bubble */}
-                    <div
-                      className={canEdit ? "user-message-hoverable" : ""}
-                      style={{
-                        maxWidth: "75%",
-                        padding: 12,
-                        borderRadius: 8,
-                        background: msg.role === "user" ? "#e3f2fd" : "#f1f3f4",
-                        fontSize: 14,
-                        lineHeight: 1.5,
-                        position: "relative"
-                      }}
+                  return (
+                    <MessageAnimator
+                      key={msg.id}
+                      id={msg.id}
+                      direction={msg.role === 'user' ? 'right' : 'left'}
+                      delay={index * 0.05}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                        <div style={{ fontWeight: 500, fontSize: 12, color: "#64748b" }}>
-                          {msg.role === "user" ? "Tu" : "MeepleAI"}
-                          {/* CHAT-06: Edited badge */}
-                          {msg.updatedAt && !msg.isDeleted && (
-                            <span style={{ marginLeft: 6, fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>
-                              (modificato)
-                            </span>
+                      <li
+                        aria-label={`${msg.role === "user" ? "Your message" : "AI response"}`}
+                        style={{
+                          marginBottom: 24,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: msg.role === "user" ? "flex-end" : "flex-start"
+                        }}
+                      >
+                        {/* CHAT-06: Invalidation Warning (for assistant messages) */}
+                        {msg.role === "assistant" && msg.isInvalidated && (
+                          <div
+                            style={{
+                              maxWidth: "75%",
+                              padding: 8,
+                              marginBottom: 8,
+                              background: "#fef3c7",
+                              border: "1px solid #f59e0b",
+                              borderRadius: 4,
+                              fontSize: 12,
+                              color: "#92400e",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                            role="alert"
+                          >
+                            <span style={{ fontSize: 14 }}>⚠️</span>
+                            <span>Questa risposta potrebbe essere obsoleta a causa di una modifica o eliminazione di un messaggio precedente.</span>
+                          </div>
+                        )}
+
+                        {/* Message Bubble */}
+                        <div
+                          className={canEdit ? "user-message-hoverable" : ""}
+                          style={{
+                            maxWidth: "75%",
+                            padding: 12,
+                            borderRadius: 8,
+                            background: msg.role === "user" ? "#e3f2fd" : "#f1f3f4",
+                            fontSize: 14,
+                            lineHeight: 1.5,
+                            position: "relative"
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <div style={{ fontWeight: 500, fontSize: 12, color: "#64748b" }}>
+                              {msg.role === "user" ? "Tu" : "MeepleAI"}
+                              {/* CHAT-06: Edited badge */}
+                              {msg.updatedAt && !msg.isDeleted && (
+                                <span style={{ marginLeft: 6, fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>
+                                  (modificato)
+                                </span>
+                              )}
+                            </div>
+
+                            {/* CHAT-06: Edit/Delete buttons for user messages */}
+                            {canEdit && !isEditing && (
+                              <div className="message-actions" style={{ display: "flex", gap: 4, opacity: 0, transition: "opacity 0.2s" }}>
+                                <button
+                                  onClick={() => startEditMessage(msg.id, msg.content)}
+                                  disabled={isUpdatingMessage}
+                                  aria-label="Edit message"
+                                  style={{
+                                    padding: "2px 6px",
+                                    background: "#94a3b8",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: 3,
+                                    fontSize: 10,
+                                    cursor: isUpdatingMessage ? "not-allowed" : "pointer",
+                                    opacity: isUpdatingMessage ? 0.5 : 1
+                                  }}
+                                  title="Modifica messaggio"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => backendMsgId && startDeleteMessage(backendMsgId)}
+                                  disabled={isUpdatingMessage || isDeletingMessage}
+                                  aria-label="Delete message"
+                                  style={{
+                                    padding: "2px 6px",
+                                    background: "#94a3b8",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: 3,
+                                    fontSize: 10,
+                                    cursor: isUpdatingMessage || isDeletingMessage ? "not-allowed" : "pointer",
+                                    opacity: isUpdatingMessage || isDeletingMessage ? 0.5 : 1
+                                  }}
+                                  title="Elimina messaggio"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* CHAT-06: Message content or edit form */}
+                          {msg.isDeleted ? (
+                            <div style={{ color: "#94a3b8", fontStyle: "italic" }}>
+                              [Messaggio eliminato]
+                            </div>
+                          ) : isEditing ? (
+                            <div style={{ marginTop: 8 }}>
+                              <textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                disabled={isUpdatingMessage}
+                                style={{
+                                  width: "100%",
+                                  minHeight: 80,
+                                  padding: 8,
+                                  fontSize: 14,
+                                  border: "1px solid #cbd5e1",
+                                  borderRadius: 4,
+                                  fontFamily: "inherit",
+                                  resize: "vertical"
+                                }}
+                                aria-label="Edit message content"
+                              />
+                              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                                <button
+                                  onClick={() => activeChatId && backendMsgId && void saveEdit(activeChatId, backendMsgId)}
+                                  disabled={isUpdatingMessage || !editContent.trim()}
+                                  style={{
+                                    padding: "6px 12px",
+                                    background: isUpdatingMessage || !editContent.trim() ? "#cbd5e1" : "#1a73e8",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: 4,
+                                    fontSize: 12,
+                                    fontWeight: 500,
+                                    cursor: isUpdatingMessage || !editContent.trim() ? "not-allowed" : "pointer"
+                                  }}
+                                  aria-label="Save edited message"
+                                >
+                                  {isUpdatingMessage ? "Salvataggio..." : "Salva"}
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  disabled={isUpdatingMessage}
+                                  style={{
+                                    padding: "6px 12px",
+                                    background: "#94a3b8",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: 4,
+                                    fontSize: 12,
+                                    fontWeight: 500,
+                                    cursor: isUpdatingMessage ? "not-allowed" : "pointer"
+                                  }}
+                                  aria-label="Cancel edit"
+                                >
+                                  Annulla
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ whiteSpace: "pre-wrap" }}>{msg.content}</div>
+                          )}
+
+                          {/* Sources */}
+                          {!msg.isDeleted && !isEditing && msg.snippets && msg.snippets.length > 0 && (
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #dadce0" }}>
+                              <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: "#64748b" }}>
+                                Fonti:
+                              </div>
+                              {msg.snippets.map((snippet, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    marginBottom: 8,
+                                    padding: 8,
+                                    background: "#ffffff",
+                                    border: "1px solid #dadce0",
+                                    borderRadius: 4,
+                                    fontSize: 12
+                                  }}
+                                >
+                                  <div style={{ fontWeight: 500, marginBottom: 4 }}>
+                                    {getSnippetLabel(snippet)}
+                                  </div>
+                                  <div style={{ color: "#64748b", fontSize: 11 }}>{snippet.text}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* CHAT-02: Follow-up Questions */}
+                          {!msg.isDeleted && !isEditing && msg.role === "assistant" && msg.followUpQuestions && msg.followUpQuestions.length > 0 && (
+                            <FollowUpQuestions
+                              questions={msg.followUpQuestions}
+                              onQuestionClick={handleFollowUpClick}
+                              disabled={streamingState.isStreaming}
+                            />
                           )}
                         </div>
 
-                        {/* CHAT-06: Edit/Delete buttons for user messages */}
-                        {canEdit && !isEditing && (
-                          <div className="message-actions" style={{ display: "flex", gap: 4, opacity: 0, transition: "opacity 0.2s" }}>
+                        {/* Feedback buttons (only for assistant messages) */}
+                        {!msg.isDeleted && msg.role === "assistant" && (
+                          <div role="group" aria-label="Message feedback" style={{ display: "flex", gap: 8, marginTop: 8 }}>
                             <button
-                              onClick={() => startEditMessage(msg.id, msg.content)}
-                              disabled={isUpdatingMessage}
-                              aria-label="Edit message"
+                              onClick={() => void setFeedback(msg.id, "helpful")}
+                              aria-label="Mark as helpful"
+                              aria-pressed={msg.feedback === "helpful"}
                               style={{
-                                padding: "2px 6px",
-                                background: "#94a3b8",
-                                color: "white",
+                                padding: "4px 8px",
+                                background: msg.feedback === "helpful" ? "#34a853" : "#f1f3f4",
+                                color: msg.feedback === "helpful" ? "white" : "#64748b",
                                 border: "none",
-                                borderRadius: 3,
-                                fontSize: 10,
-                                cursor: isUpdatingMessage ? "not-allowed" : "pointer",
-                                opacity: isUpdatingMessage ? 0.5 : 1
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4
                               }}
-                              title="Modifica messaggio"
+                              title="Questa risposta è stata utile"
                             >
-                              ✏️
+                              👍 Utile
                             </button>
                             <button
-                              onClick={() => backendMsgId && startDeleteMessage(backendMsgId)}
-                              disabled={isUpdatingMessage || isDeletingMessage}
-                              aria-label="Delete message"
+                              onClick={() => void setFeedback(msg.id, "not-helpful")}
+                              aria-label="Mark as not helpful"
+                              aria-pressed={msg.feedback === "not-helpful"}
                               style={{
-                                padding: "2px 6px",
-                                background: "#94a3b8",
-                                color: "white",
+                                padding: "4px 8px",
+                                background: msg.feedback === "not-helpful" ? "#ea4335" : "#f1f3f4",
+                                color: msg.feedback === "not-helpful" ? "white" : "#64748b",
                                 border: "none",
-                                borderRadius: 3,
-                                fontSize: 10,
-                                cursor: isUpdatingMessage || isDeletingMessage ? "not-allowed" : "pointer",
-                                opacity: isUpdatingMessage || isDeletingMessage ? 0.5 : 1
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4
                               }}
-                              title="Elimina messaggio"
+                              title="Questa risposta non è stata utile"
                             >
-                              🗑️
+                              👎 Non utile
                             </button>
                           </div>
                         )}
-                      </div>
 
-                      {/* CHAT-06: Message content or edit form */}
-                      {msg.isDeleted ? (
-                        <div style={{ color: "#94a3b8", fontStyle: "italic" }}>
-                          [Messaggio eliminato]
+                        {/* Timestamp */}
+                        <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+                          {msg.timestamp.toLocaleTimeString()}
                         </div>
-                      ) : isEditing ? (
-                        <div style={{ marginTop: 8 }}>
-                          <textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            disabled={isUpdatingMessage}
-                            style={{
-                              width: "100%",
-                              minHeight: 80,
-                              padding: 8,
-                              fontSize: 14,
-                              border: "1px solid #cbd5e1",
-                              borderRadius: 4,
-                              fontFamily: "inherit",
-                              resize: "vertical"
-                            }}
-                            aria-label="Edit message content"
-                          />
-                          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                            <button
-                              onClick={() => activeChatId && backendMsgId && void saveEdit(activeChatId, backendMsgId)}
-                              disabled={isUpdatingMessage || !editContent.trim()}
-                              style={{
-                                padding: "6px 12px",
-                                background: isUpdatingMessage || !editContent.trim() ? "#cbd5e1" : "#1a73e8",
-                                color: "white",
-                                border: "none",
-                                borderRadius: 4,
-                                fontSize: 12,
-                                fontWeight: 500,
-                                cursor: isUpdatingMessage || !editContent.trim() ? "not-allowed" : "pointer"
-                              }}
-                              aria-label="Save edited message"
-                            >
-                              {isUpdatingMessage ? "Salvataggio..." : "Salva"}
-                            </button>
-                            <button
-                              onClick={cancelEdit}
-                              disabled={isUpdatingMessage}
-                              style={{
-                                padding: "6px 12px",
-                                background: "#94a3b8",
-                                color: "white",
-                                border: "none",
-                                borderRadius: 4,
-                                fontSize: 12,
-                                fontWeight: 500,
-                                cursor: isUpdatingMessage ? "not-allowed" : "pointer"
-                              }}
-                              aria-label="Cancel edit"
-                            >
-                              Annulla
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ whiteSpace: "pre-wrap" }}>{msg.content}</div>
-                      )}
-
-                      {/* Sources */}
-                      {!msg.isDeleted && !isEditing && msg.snippets && msg.snippets.length > 0 && (
-                        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #dadce0" }}>
-                          <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: "#64748b" }}>
-                            Fonti:
-                          </div>
-                          {msg.snippets.map((snippet, idx) => (
-                            <div
-                              key={idx}
-                              style={{
-                                marginBottom: 8,
-                                padding: 8,
-                                background: "#ffffff",
-                                border: "1px solid #dadce0",
-                                borderRadius: 4,
-                                fontSize: 12
-                              }}
-                            >
-                              <div style={{ fontWeight: 500, marginBottom: 4 }}>
-                                {getSnippetLabel(snippet)}
-                              </div>
-                              <div style={{ color: "#64748b", fontSize: 11 }}>{snippet.text}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* CHAT-02: Follow-up Questions */}
-                      {!msg.isDeleted && !isEditing && msg.role === "assistant" && msg.followUpQuestions && msg.followUpQuestions.length > 0 && (
-                        <FollowUpQuestions
-                          questions={msg.followUpQuestions}
-                          onQuestionClick={handleFollowUpClick}
-                          disabled={streamingState.isStreaming}
-                        />
-                      )}
-                    </div>
-
-                    {/* Feedback buttons (only for assistant messages) */}
-                    {!msg.isDeleted && msg.role === "assistant" && (
-                      <div role="group" aria-label="Message feedback" style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                        <button
-                          onClick={() => void setFeedback(msg.id, "helpful")}
-                          aria-label="Mark as helpful"
-                          aria-pressed={msg.feedback === "helpful"}
-                          style={{
-                            padding: "4px 8px",
-                            background: msg.feedback === "helpful" ? "#34a853" : "#f1f3f4",
-                            color: msg.feedback === "helpful" ? "white" : "#64748b",
-                            border: "none",
-                            borderRadius: 4,
-                            fontSize: 12,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4
-                          }}
-                          title="Questa risposta è stata utile"
-                        >
-                          👍 Utile
-                        </button>
-                        <button
-                          onClick={() => void setFeedback(msg.id, "not-helpful")}
-                          aria-label="Mark as not helpful"
-                          aria-pressed={msg.feedback === "not-helpful"}
-                          style={{
-                            padding: "4px 8px",
-                            background: msg.feedback === "not-helpful" ? "#ea4335" : "#f1f3f4",
-                            color: msg.feedback === "not-helpful" ? "white" : "#64748b",
-                            border: "none",
-                            borderRadius: 4,
-                            fontSize: 12,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4
-                          }}
-                          title="Questa risposta non è stata utile"
-                        >
-                          👎 Non utile
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Timestamp */}
-                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
-                      {msg.timestamp.toLocaleTimeString()}
-                    </div>
-                  </li>
-                );
-              })}
+                      </li>
+                    </MessageAnimator>
+                  );
+                })}
+              </AnimatePresence>
             </ul>
+          )}
+
+          {/* CHAT-04: Typing Indicator before streaming response */}
+          {streamingState.isStreaming && streamingState.state && (
+            <div style={{ marginBottom: 12 }}>
+              <TypingIndicator
+                visible={streamingState.isStreaming && !streamingState.currentAnswer}
+                agentName={selectedAgent?.name || "AI"}
+              />
+            </div>
           )}
 
           {/* Streaming Response */}
@@ -1357,6 +1443,9 @@ export default function ChatPage() {
               </div>
             </div>
           )}
+
+          {/* CHAT-04: Scroll target */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Form */}
@@ -1389,9 +1478,12 @@ export default function ChatPage() {
               borderRadius: 4
             }}
           />
-          <button
+          <LoadingButton
             type="submit"
-            disabled={isSendingMessage || streamingState.isStreaming || !inputValue.trim() || !selectedGameId || !selectedAgentId}
+            isLoading={isSendingMessage || streamingState.isStreaming}
+            loadingText="Invio..."
+            disabled={!inputValue.trim() || !selectedGameId || !selectedAgentId}
+            spinnerSize="sm"
             aria-label="Send message"
             style={{
               padding: "12px 24px",
@@ -1410,8 +1502,8 @@ export default function ChatPage() {
                   : "pointer"
             }}
           >
-            {isSendingMessage || streamingState.isStreaming ? "Invio..." : "Invia"}
-          </button>
+            Invia
+          </LoadingButton>
         </form>
       </div>
 
@@ -1495,6 +1587,16 @@ export default function ChatPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* CHAT-05: Export Chat Modal */}
+      {activeChatId && selectedGameId && (
+        <ExportChatModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          chatId={activeChatId}
+          gameName={games.find((g) => g.id === selectedGameId)?.name ?? "Unknown Game"}
+        />
       )}
 
       {/* CHAT-06: CSS for hover effects and animations */}
