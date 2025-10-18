@@ -83,6 +83,7 @@ describe('CacheDashboard', () => {
   it('renders loading state while data is being fetched', () => {
     fetchMock.mockImplementation(() => new Promise(() => {}));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
 
@@ -96,6 +97,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
 
@@ -151,13 +153,15 @@ describe('CacheDashboard', () => {
     const mediumHitRate = { ...mockStatsResponse, hitRate: 0.5, totalHits: 500, totalMisses: 500 };
     const lowHitRate = { ...mockStatsResponse, hitRate: 0.3, totalHits: 300, totalMisses: 700 };
 
+    // Phase 1: Set env BEFORE loading module
+    process.env.NEXT_PUBLIC_API_BASE = apiBase;
+    // Phase 2: Store component once per test, not per subtest
+    const CacheDashboard = loadCacheDashboard();
+
     // Test high hit rate (green)
     fetchMock
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(highHitRate));
-
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
@@ -165,7 +169,8 @@ describe('CacheDashboard', () => {
 
     cleanup();
 
-    // Test medium hit rate (yellow)
+    // Phase 2: Use direct render after cleanup (no module reload)
+    // Phase 3: Reset mocks before new chain
     fetchMock.mockReset();
     fetchMock
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
@@ -177,7 +182,8 @@ describe('CacheDashboard', () => {
 
     cleanup();
 
-    // Test low hit rate (red)
+    // Phase 2: Use direct render after cleanup (no module reload)
+    // Phase 3: Reset mocks before new chain
     fetchMock.mockReset();
     fetchMock
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
@@ -210,6 +216,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(gameSpecificStats));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -242,6 +249,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse)); // Refresh after invalidation
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -300,6 +308,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse)); // Refresh after invalidation
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -350,6 +359,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -375,6 +385,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -408,6 +419,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse))
       .mockResolvedValueOnce(createJsonResponse({ error: 'Unauthorized' }, false, 401));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -439,6 +451,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -472,6 +485,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(emptyStats));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
 
@@ -488,6 +502,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(null, false, 401));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
 
@@ -499,6 +514,7 @@ describe('CacheDashboard', () => {
   });
 
   it('automatically dismisses toast notifications after 5 seconds', async () => {
+    // Phase 4: Scope fake timers to this test only
     jest.useFakeTimers();
 
     fetchMock
@@ -507,12 +523,14 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
 
     render(<CacheDashboard />);
 
+    // Phase 3: Add explicit waitFor for async operations
     await waitFor(() => expect(screen.getByText('Cache Management Dashboard')).toBeInTheDocument());
 
     // Trigger a refresh to create a toast
@@ -531,6 +549,7 @@ describe('CacheDashboard', () => {
       expect(screen.queryByText('Refreshing cache statistics...')).not.toBeInTheDocument();
     });
 
+    // Phase 4: Restore real timers in cleanup
     jest.useRealTimers();
   });
 
@@ -541,6 +560,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -571,13 +591,15 @@ describe('CacheDashboard', () => {
     const smallCache = { ...mockStatsResponse, cacheSizeBytes: 512 * 1024 }; // 512 KB
     const largeCache = { ...mockStatsResponse, cacheSizeBytes: 50 * 1024 * 1024 }; // 50 MB
 
+    // Phase 1: Set env BEFORE loading module
+    process.env.NEXT_PUBLIC_API_BASE = apiBase;
+    // Phase 2: Store component once per test, not per subtest
+    const CacheDashboard = loadCacheDashboard();
+
     // Test KB formatting
     fetchMock
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(smallCache));
-
-    process.env.NEXT_PUBLIC_API_BASE = apiBase;
-    const CacheDashboard = loadCacheDashboard();
 
     render(<CacheDashboard />);
 
@@ -585,7 +607,8 @@ describe('CacheDashboard', () => {
 
     cleanup();
 
-    // Test MB formatting
+    // Phase 2: Use direct render after cleanup (no module reload)
+    // Phase 3: Reset mocks before new chain
     fetchMock.mockReset();
     fetchMock
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
@@ -597,7 +620,9 @@ describe('CacheDashboard', () => {
   });
 
   it('falls back to localhost API base when NEXT_PUBLIC_API_BASE is unset', async () => {
+    // Phase 1: Ensure env is unset BEFORE loading module
     delete process.env.NEXT_PUBLIC_API_BASE;
+    const CacheDashboard = loadCacheDashboard();
 
     fetchMock
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
@@ -627,6 +652,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
     const user = userEvent.setup({ delay: null });
@@ -651,6 +677,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
 
@@ -672,6 +699,7 @@ describe('CacheDashboard', () => {
       .mockResolvedValueOnce(createJsonResponse(mockGamesResponse))
       .mockResolvedValueOnce(createJsonResponse(mockStatsResponse));
 
+    // Phase 1: Set env BEFORE loading module
     process.env.NEXT_PUBLIC_API_BASE = apiBase;
     const CacheDashboard = loadCacheDashboard();
 
