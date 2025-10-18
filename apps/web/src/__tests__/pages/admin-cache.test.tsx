@@ -136,7 +136,8 @@ describe('CacheDashboard', () => {
     expect(screen.getByText('Miss Rate: 25.0%')).toBeInTheDocument();
 
     expect(screen.getByText('Total Requests')).toBeInTheDocument();
-    expect(screen.getByText('1,000')).toBeInTheDocument();
+    // FIX (issue #463): Use regex to handle locale variations ("1,000" vs "1000")
+    expect(screen.getByText(/1,?000/)).toBeInTheDocument();
     expect(screen.getByText('Cached: 750')).toBeInTheDocument();
     expect(screen.getByText('Not Cached: 250')).toBeInTheDocument();
 
@@ -315,9 +316,11 @@ describe('CacheDashboard', () => {
     await user.click(invalidateButton);
 
     // Check confirmation dialog appears
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText('Invalidate Game Cache')).toBeInTheDocument();
-    expect(screen.getByText(/Are you sure you want to invalidate all cached responses for "Chess"/)).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    // FIX (issue #463): Query within dialog to avoid "multiple elements" error
+    expect(within(dialog).getByText('Invalidate Game Cache')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Are you sure you want to invalidate all cached responses for "Chess"/)).toBeInTheDocument();
 
     // Confirm invalidation
     const confirmButton = screen.getByRole('button', { name: 'Confirm' });
@@ -647,12 +650,12 @@ describe('CacheDashboard', () => {
     // Wait for toast to appear
     expect(await screen.findByText('Refreshing cache statistics...')).toBeInTheDocument();
 
-    // FIX 4: Advance timers by 5 seconds using act to prevent warnings
-    await waitFor(() => {
-      jest.advanceTimersByTime(5000);
-    });
+    // FIX (issue #463): Advance timers BEFORE waitFor, NOT inside it
+    // Anti-pattern: jest.advanceTimersByTime() inside waitFor() callback causes timeouts
+    // Correct pattern: Advance timers first, then wait for assertion
+    jest.advanceTimersByTime(5000);
 
-    // Toast should be removed
+    // Toast should be removed after 5 seconds
     await waitFor(() => {
       expect(screen.queryByText('Refreshing cache statistics...')).not.toBeInTheDocument();
     });
