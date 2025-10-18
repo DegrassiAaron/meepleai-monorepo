@@ -227,10 +227,10 @@ public class MeepleAiDbContext : DbContext
             entity.HasIndex(e => new { e.ChatId, e.CreatedAt });
             entity.HasIndex(e => e.UserId)
                 .HasDatabaseName("idx_chat_logs_user_id")
-                .HasFilter("user_id IS NOT NULL");
+                .HasFilter("\"UserId\" IS NOT NULL");
             entity.HasIndex(e => e.DeletedAt)
                 .HasDatabaseName("idx_chat_logs_deleted_at")
-                .HasFilter("deleted_at IS NOT NULL");
+                .HasFilter("\"DeletedAt\" IS NOT NULL");
             entity.HasIndex(e => new { e.ChatId, e.SequenceNumber, e.Level })
                 .HasDatabaseName("idx_chat_logs_chat_id_sequence_role");
 
