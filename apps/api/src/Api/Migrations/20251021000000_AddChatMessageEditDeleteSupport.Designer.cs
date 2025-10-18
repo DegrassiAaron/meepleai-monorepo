@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Api.Migrations
 {
     [DbContext(typeof(MeepleAiDbContext))]
-    [Migration("20251018190044_AddChatMessageEditDeleteSupport")]
+    [Migration("20251021000000_AddChatMessageEditDeleteSupport")]
     partial class AddChatMessageEditDeleteSupport
     {
         /// <inheritdoc />
