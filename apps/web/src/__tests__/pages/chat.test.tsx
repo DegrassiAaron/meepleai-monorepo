@@ -137,8 +137,8 @@ describe('ChatPage', () => {
     mockApi.post.mockReset();
     mockApi.put.mockReset();
     mockApi.delete.mockReset();
-    (mockApi.chatMessages.updateMessage as jest.Mock).mockReset();
-    (mockApi.chatMessages.deleteMessage as jest.Mock).mockReset();
+    (mockApi.chat.updateMessage as jest.Mock).mockReset();
+    (mockApi.chat.deleteMessage as jest.Mock).mockReset();
     mockStartStreaming.mockReset();
     mockStopStreaming.mockReset();
     mockOnComplete = null;
@@ -2762,7 +2762,7 @@ describe('ChatPage', () => {
 
       it('save button calls API with correct parameters', async () => {
         setupEditableChatState();
-        (mockApi.chatMessages.updateMessage as jest.Mock).mockResolvedValueOnce(mockUpdatedMessageResponse);
+        (mockApi.chat.updateMessage as jest.Mock).mockResolvedValueOnce(mockUpdatedMessageResponse);
         mockApi.get.mockResolvedValueOnce({
           ...mockChatWithEditableMessages,
           messages: mockChatWithEditableMessages.messages.map(m =>
@@ -2784,13 +2784,13 @@ describe('ChatPage', () => {
         const saveButton = screen.getByLabelText('Save edited message');
         await user.click(saveButton);
         await waitFor(() => {
-          expect(mockApi.chatMessages.updateMessage).toHaveBeenCalledWith('chat-edit-1', 'msg-user-1', 'Updated message content');
+          expect(mockApi.chat.updateMessage).toHaveBeenCalledWith('chat-edit-1', 'msg-user-1', 'Updated message content');
         });
       });
 
       it('save button refetches chat history after successful edit', async () => {
         setupEditableChatState();
-        (mockApi.chatMessages.updateMessage as jest.Mock).mockResolvedValueOnce(mockUpdatedMessageResponse);
+        (mockApi.chat.updateMessage as jest.Mock).mockResolvedValueOnce(mockUpdatedMessageResponse);
         const updatedChat = {
           ...mockChatWithEditableMessages,
           messages: mockChatWithEditableMessages.messages.map(m =>
@@ -2830,7 +2830,7 @@ describe('ChatPage', () => {
         await waitFor(() => screen.getByText('Chess Expert'));
         await user.click(screen.getByText('Chess Expert'));
         await waitFor(() => screen.getByText('Original user message'));
-        const initialUpdateCallCount = (mockApi.chatMessages.updateMessage as jest.Mock).mock.calls.length;
+        const initialUpdateCallCount = (mockApi.chat.updateMessage as jest.Mock).mock.calls.length;
         const editButtons = screen.getAllByTitle('Modifica messaggio');
         await user.click(editButtons[0]);
         await waitFor(() => screen.getByLabelText('Edit message content'));
@@ -2842,7 +2842,7 @@ describe('ChatPage', () => {
         await waitFor(() => {
           expect(screen.getByText('Original user message')).toBeInTheDocument();
         });
-        expect((mockApi.chatMessages.updateMessage as jest.Mock).mock.calls.length).toBe(initialUpdateCallCount);
+        expect((mockApi.chat.updateMessage as jest.Mock).mock.calls.length).toBe(initialUpdateCallCount);
         expect(screen.queryByLabelText('Edit message content')).not.toBeInTheDocument();
       });
 
@@ -2908,7 +2908,7 @@ describe('ChatPage', () => {
 
       it('confirm delete calls API with correct parameters', async () => {
         setupEditableChatState();
-        (mockApi.chatMessages.deleteMessage as jest.Mock).mockResolvedValueOnce(undefined);
+        (mockApi.chat.deleteMessage as jest.Mock).mockResolvedValueOnce(undefined);
         mockApi.get.mockResolvedValueOnce({
           ...mockChatWithEditableMessages,
           messages: mockChatWithEditableMessages.messages.map(m =>
@@ -2927,7 +2927,7 @@ describe('ChatPage', () => {
         const confirmButton = screen.getByText('Elimina');
         await user.click(confirmButton);
         await waitFor(() => {
-          expect(mockApi.chatMessages.deleteMessage).toHaveBeenCalledWith('chat-edit-1', 'msg-user-1');
+          expect(mockApi.chat.deleteMessage).toHaveBeenCalledWith('chat-edit-1', 'msg-user-1');
         });
       });
 
@@ -2939,7 +2939,7 @@ describe('ChatPage', () => {
         await waitFor(() => screen.getByText('Chess Expert'));
         await user.click(screen.getByText('Chess Expert'));
         await waitFor(() => screen.getByText('Original user message'));
-        const initialDeleteCallCount = (mockApi.chatMessages.deleteMessage as jest.Mock).mock.calls.length;
+        const initialDeleteCallCount = (mockApi.chat.deleteMessage as jest.Mock).mock.calls.length;
         const deleteButtons = screen.getAllByTitle('Elimina messaggio');
         await user.click(deleteButtons[0]);
         await waitFor(() => screen.getByText('Eliminare il messaggio?'));
@@ -2948,7 +2948,7 @@ describe('ChatPage', () => {
         await waitFor(() => {
           expect(screen.queryByText('Eliminare il messaggio?')).not.toBeInTheDocument();
         });
-        expect((mockApi.chatMessages.deleteMessage as jest.Mock).mock.calls.length).toBe(initialDeleteCallCount);
+        expect((mockApi.chat.deleteMessage as jest.Mock).mock.calls.length).toBe(initialDeleteCallCount);
         expect(screen.getByText('Original user message')).toBeInTheDocument();
       });
 
@@ -2995,7 +2995,7 @@ describe('ChatPage', () => {
       it('shows error toast when edit fails with 403 Forbidden', async () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         setupEditableChatState();
-        (mockApi.chatMessages.updateMessage as jest.Mock).mockRejectedValueOnce(new Error('API /api/v1/chats/chat-edit-1/messages/msg-user-1 403'));
+        (mockApi.chat.updateMessage as jest.Mock).mockRejectedValueOnce(new Error('API /api/v1/chats/chat-edit-1/messages/msg-user-1 403'));
         render(<ChatPage />);
         await waitFor(() => expect(mockApi.get).toHaveBeenCalledWith('/api/v1/auth/me'));
         const user = userEvent.setup();
@@ -3019,7 +3019,7 @@ describe('ChatPage', () => {
       it('shows error toast when delete fails with 404 Not Found', async () => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         setupEditableChatState();
-        (mockApi.chatMessages.deleteMessage as jest.Mock).mockRejectedValueOnce(new Error('API /api/v1/chats/chat-edit-1/messages/msg-user-1 404'));
+        (mockApi.chat.deleteMessage as jest.Mock).mockRejectedValueOnce(new Error('API /api/v1/chats/chat-edit-1/messages/msg-user-1 404'));
         render(<ChatPage />);
         await waitFor(() => expect(mockApi.get).toHaveBeenCalledWith('/api/v1/auth/me'));
         const user = userEvent.setup();

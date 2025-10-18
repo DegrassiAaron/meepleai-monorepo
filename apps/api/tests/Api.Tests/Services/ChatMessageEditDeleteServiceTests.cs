@@ -78,8 +78,6 @@ public class ChatMessageEditDeleteServiceTests : IDisposable
         {
             Id = "test-game",
             Name = "Test Game",
-            Description = "Test",
-            Tags = new[] { "test" },
             CreatedAt = DateTime.UtcNow
         };
         _context.Games.Add(game);
