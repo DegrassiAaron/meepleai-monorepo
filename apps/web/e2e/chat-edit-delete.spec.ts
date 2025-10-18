@@ -23,13 +23,17 @@ test.describe('CHAT-06: Message Editing and Deletion', () => {
   test.beforeEach(async ({ page }) => {
     // Login with demo user
     await page.goto('/');
-    await page.fill('input[type="email"]', 'user@meepleai.dev');
-    await page.fill('input[type="password"]', 'Demo123!');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL('/');
 
-    // Navigate to chat page
-    await page.goto('/chat');
+    // Click first "Get Started Free" button to open auth modal (there are 2 on the page)
+    await page.getByRole('button', { name: 'Get Started Free' }).first().click();
+
+    // Wait for modal to open and fill login form
+    await page.getByLabel('Email').fill('user@meepleai.dev');
+    await page.getByLabel('Password').fill('Demo123!');
+    await page.locator('form button[type="submit"]:has-text("Login")').click();
+
+    // Wait for redirect to chat after login
+    await expect(page).toHaveURL('/chat', { timeout: 10000 });
     await page.waitForLoadState('networkidle');
   });
 
